@@ -161,7 +161,7 @@ function GuildBankManager:ShowMainFrame()
         self:CreateMainFrame()
     end
 
-    self:UpdateGuildInformation()
+    self:UpdateGuildInfo()
 
     self.mainFrame:Show()
 
