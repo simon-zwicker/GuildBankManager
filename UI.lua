@@ -1,5 +1,3 @@
-local GBM = GuildBankManager
-
 local MAIN_WIDTH = 900
 local MAIN_HEIGHT = 600
 
@@ -161,7 +159,7 @@ function GuildBankManager:ShowMainFrame()
         self:CreateMainFrame()
     end
 
-    self:UpdateGuildInfo()
+    GuildBankManager:UpdateGuildInfo()
 
     self.mainFrame:Show()
 
