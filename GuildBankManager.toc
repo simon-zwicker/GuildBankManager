@@ -1,0 +1,12 @@
+## Interface: 11509
+## Title: GuildBankManager
+## Notes: Guild bank management, request, tracking and statistics.
+## Author: Simon Zwicker
+## Version: 0.1.0
+## SavedVariables: GuildBankManagerDB
+
+Core.lua
+Database.lua
+Guild.lua
+Bank.lua
+UI.lua
