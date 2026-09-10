@@ -1,13 +1,18 @@
 local GBM = GBM
 
 GBM.UI = {}
+
 local UI = GBM.UI
 
-local WINDOW_WIDTH = 900
-local WINDOW_HEIGHT = 600
+local L = GBM.L
 
-local TAB_WIDTH = 160
-local TAB_HEIGHT = 32
+local WINDOW_WIDTH = 1100
+local WINDOW_HEIGHT = 700
+
+local TAB_HEIGHT = 38
+local TAB_GAP = 4
+
+local TAB_FONT_SIZE = 14
 
 local function CreateMainFrame()
 
@@ -18,30 +23,61 @@ local function CreateMainFrame()
         "BasicFrameTemplateWithInset"
     )
 
-    frame:SetSize(WINDOW_WIDTH, WINDOW_HEIGHT)
-    frame:SetPoint("CENTER")
+    frame:SetSize(
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT
+    )
+
+    frame:SetPoint(
+        "CENTER"
+    )
 
     frame:SetMovable(true)
     frame:EnableMouse(true)
-    frame:RegisterForDrag("LeftButton")
+    frame:RegisterForDrag(
+        "LeftButton"
+    )
 
-    frame:SetScript("OnDragStart", frame.StartMoving)
-    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+    frame:SetScript(
+        "OnDragStart",
+        frame.StartMoving
+    )
 
-    frame.TitleText:SetText("GuildBankManager")
+    frame:SetScript(
+        "OnDragStop",
+        frame.StopMovingOrSizing
+    )
+
+    frame:SetScript(
+        "OnHide",
+        function()
+
+            if UI.Tabs then
+                UI.Tabs:Hide()
+            end
+
+        end
+    )
+
+    frame.TitleText:SetText(
+        L.ADDON_NAME
+    )
 
     frame:Hide()
 
     return frame
 end
 
-local function CreateContent(frame)
+local function CreateContent(
+    frame
+)
 
-    local content = CreateFrame(
-        "Frame",
-        nil,
-        frame
-    )
+    local content =
+        CreateFrame(
+            "Frame",
+            nil,
+            frame
+        )
 
     content:SetPoint(
         "TOPLEFT",
@@ -56,10 +92,11 @@ local function CreateContent(frame)
         frame,
         "BOTTOMRIGHT",
         -10,
-        TAB_HEIGHT + 10
+        10
     )
 
-    UI.Content = content
+    UI.Content =
+        content
 
     return content
 end
@@ -76,45 +113,69 @@ local function CreateViews()
         "settings",
     }
 
-    for _, viewName in ipairs(viewNames) do
+    for _, viewName in ipairs(
+        viewNames
+    ) do
 
-        local view = CreateFrame(
-            "Frame",
-            nil,
-            UI.Content
-        )
+        local view =
+            CreateFrame(
+                "Frame",
+                nil,
+                UI.Content
+            )
 
         view:SetAllPoints()
 
         view:Hide()
 
-        UI.Views[viewName] = view
+        UI.Views[viewName] =
+            view
+
     end
 end
 
-local function CreateTab(parent, text, id)
+local function CreateTab(
+    parent,
+    text,
+    id
+)
 
-    local tab = CreateFrame(
-        "Button",
-        nil,
-        parent
+    local tab =
+        CreateFrame(
+            "Button",
+            nil,
+            parent
+        )
+
+    tab:SetHeight(
+        TAB_HEIGHT
     )
 
-    tab:SetHeight(TAB_HEIGHT)
+    tab.Text =
+        tab:CreateFontString(
+            nil,
+            "OVERLAY"
+        )
 
-    tab.Text = tab:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
+    tab.Text:SetPoint(
+        "CENTER"
     )
 
-    tab.Text:SetPoint("CENTER")
-    tab.Text:SetText(text)
-
-    tab.Background = tab:CreateTexture(
-        nil,
-        "BACKGROUND"
+    tab.Text:SetFont(
+        STANDARD_TEXT_FONT,
+        TAB_FONT_SIZE,
+        "OUTLINE"
     )
+
+    tab.Text:SetText(
+        text
+    )
+
+    tab.Background =
+        tab:CreateTexture(
+            nil,
+            "BACKGROUND"
+        )
 
     tab.Background:SetAllPoints()
 
@@ -122,13 +183,14 @@ local function CreateTab(parent, text, id)
         0.12,
         0.12,
         0.12,
-        0.9
+        0.95
     )
 
-    tab.Highlight = tab:CreateTexture(
-        nil,
-        "HIGHLIGHT"
-    )
+    tab.Highlight =
+        tab:CreateTexture(
+            nil,
+            "HIGHLIGHT"
+        )
 
     tab.Highlight:SetAllPoints()
 
@@ -139,10 +201,11 @@ local function CreateTab(parent, text, id)
         0.08
     )
 
-    tab.Active = tab:CreateTexture(
-        nil,
-        "ARTWORK"
-    )
+    tab.Active =
+        tab:CreateTexture(
+            nil,
+            "ARTWORK"
+        )
 
     tab.Active:SetPoint(
         "BOTTOMLEFT",
@@ -160,7 +223,9 @@ local function CreateTab(parent, text, id)
         0
     )
 
-    tab.Active:SetHeight(3)
+    tab.Active:SetHeight(
+        3
+    )
 
     tab.Active:SetColorTexture(
         0.8,
@@ -171,127 +236,167 @@ local function CreateTab(parent, text, id)
 
     tab.Active:Hide()
 
-    tab:SetScript("OnClick", function()
+    tab:SetScript(
+        "OnClick",
+        function()
 
-        UI.ShowView(id)
+            UI.ShowView(
+                id
+            )
 
-    end)
+        end
+    )
 
     return tab
 end
 
-local function CreateTabs(frame)
+local function CreateTabs(
+    frame
+)
 
-    local tabs = CreateFrame(
-        "Frame",
-        nil,
-        frame
-    )
-
-    tabs:SetPoint(
-        "BOTTOMLEFT",
-        frame,
-        "BOTTOMLEFT",
-        10,
-        0
-    )
+    local tabs =
+        CreateFrame(
+            "Frame",
+            nil,
+            frame
+        )
 
     tabs:SetPoint(
-        "BOTTOMRIGHT",
+        "TOPLEFT",
         frame,
-        "BOTTOMRIGHT",
-        -10,
-        0
+        "BOTTOMLEFT",
+        0,
+        -TAB_GAP
     )
 
-    tabs:SetHeight(TAB_HEIGHT)
+    tabs:SetWidth(
+        WINDOW_WIDTH
+    )
 
-    UI.Tabs = tabs
+    tabs:SetHeight(
+        TAB_HEIGHT
+    )
+
+    tabs:SetFrameStrata(
+        frame:GetFrameStrata()
+    )
+
+    tabs:SetFrameLevel(
+        frame:GetFrameLevel() + 1
+    )
+
+    UI.Tabs =
+        tabs
+
     UI.TabButtons = {}
 
     local tabData = {
         {
             id = "bank",
-            text = "Bank",
+            text = L.BANK,
         },
         {
             id = "requests",
-            text = "Anfragen",
+            text = L.REQUESTS,
         },
         {
             id = "statistics",
-            text = "Statistik",
+            text = L.STATISTICS,
         },
         {
             id = "usage",
-            text = "Nutzung",
+            text = L.USAGE,
         },
         {
             id = "settings",
-            text = "Einstellungen",
+            text = L.SETTINGS,
         },
     }
 
-    local tabWidth = tabs:GetWidth() / #tabData
+    local tabWidth =
+        WINDOW_WIDTH
+        / #tabData
 
-    for index, data in ipairs(tabData) do
+    for index, data in ipairs(
+        tabData
+    ) do
 
-        local tab = CreateTab(
-            tabs,
-            data.text,
-            data.id
+        local tab =
+            CreateTab(
+                tabs,
+                data.text,
+                data.id
+            )
+
+        tab:SetWidth(
+            tabWidth
         )
 
-        tab:SetWidth(tabWidth)
-
         tab:SetPoint(
-            "BOTTOMLEFT",
+            "TOPLEFT",
             tabs,
-            "BOTTOMLEFT",
+            "TOPLEFT",
             (index - 1) * tabWidth,
             0
         )
 
-        UI.TabButtons[data.id] = tab
+        UI.TabButtons[
+            data.id
+        ] = tab
 
     end
 end
 
-local function UpdateTabs(activeView)
+local function UpdateTabs(
+    activeView
+)
 
-    for id, tab in pairs(UI.TabButtons) do
+    for id, tab in pairs(
+        UI.TabButtons
+    ) do
 
         if id == activeView then
-
             tab.Active:Show()
-            tab.Text:SetFontObject("GameFontHighlight")
-
         else
-
             tab.Active:Hide()
-            tab.Text:SetFontObject("GameFontNormal")
-
         end
+
+        tab.Text:SetFont(
+            STANDARD_TEXT_FONT,
+            TAB_FONT_SIZE,
+            "OUTLINE"
+        )
+
     end
 end
 
-function UI.ShowView(viewName)
+function UI.ShowView(
+    viewName
+)
 
-    local view = UI.Views[viewName]
+    local view =
+        UI.Views[viewName]
 
     if not view then
         return
     end
 
-    for _, otherView in pairs(UI.Views) do
+    for _, otherView in pairs(
+        UI.Views
+    ) do
+
         otherView:Hide()
+
     end
 
     view:Show()
 
-    UI.ActiveView = viewName
+    UI.ActiveView =
+        viewName
 
-    UpdateTabs(viewName)
+    UpdateTabs(
+        viewName
+    )
 
 end
 
@@ -303,7 +408,11 @@ function UI.Show()
 
     UI.MainFrame:Show()
 
-    UI.ShowView("bank")
+    UI.Tabs:Show()
+
+    UI.ShowView(
+        "bank"
+    )
 
 end
 
@@ -315,17 +424,34 @@ function UI.Hide()
 
     UI.MainFrame:Hide()
 
+    UI.Tabs:Hide()
+
 end
 
 function UI.Initialize()
 
-    local frame = CreateMainFrame()
+    local frame =
+        CreateMainFrame()
 
-    UI.MainFrame = frame
+    UI.MainFrame =
+        frame
 
-    CreateContent(frame)
+    CreateContent(
+        frame
+    )
+
     CreateViews()
-    CreateTabs(frame)
+
+    CreateTabs(
+        frame
+    )
+
+    UI.Tabs:Hide()
 
     UI.Bank.Initialize()
+    -- UI.Requests.Initialize()
+    -- UI.Statistics.Initialize()
+    -- UI.Usage.Initialize()
+    UI.Settings.Initialize()
+
 end

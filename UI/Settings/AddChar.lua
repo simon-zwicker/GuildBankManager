@@ -1,24 +1,39 @@
 local GBM = GBM
 
 GBM.AddCharUI = {}
+
 local AddCharUI = GBM.AddCharUI
+
+local L = GBM.L
 
 local ROW_HEIGHT = 28
 local WINDOW_WIDTH = 440
 local WINDOW_HEIGHT = 520
 
-local function SortMembers(members)
+local function SortMembers(
+    members
+)
 
-    table.sort(members, function(a, b)
-        return a.name:lower() < b.name:lower()
-    end)
+    table.sort(
+        members,
+        function(
+            a,
+            b
+        )
+
+            return a.name:lower()
+                < b.name:lower()
+
+        end
+    )
 
     return members
 end
 
 local function GetAvailableMembers()
 
-    local db = GBM.GuildDB.Get()
+    local db =
+        GBM.GuildDB.Get()
 
     if not db then
         return {}
@@ -26,28 +41,45 @@ local function GetAvailableMembers()
 
     local members = {}
 
-    for fullName, member in pairs(db.members) do
+    for fullName, member in pairs(
+        db.members
+    ) do
 
-        if not db.bankChars[fullName] then
+        if not db.bankChars[
+            fullName
+        ] then
 
-            table.insert(members, {
-                name = fullName,
-                class = member.class,
-            })
+            table.insert(
+                members,
+                {
+                    name = fullName,
+                    class = member.class,
+                }
+            )
 
         end
+
     end
 
-    return SortMembers(members)
+    return SortMembers(
+        members
+    )
 end
 
-local function MatchesSearch(fullName, searchText)
+local function MatchesSearch(
+    fullName,
+    searchText
+)
 
     if searchText == "" then
         return true
     end
 
-    return fullName:lower():find(searchText:lower(), 1, true) ~= nil
+    return fullName:lower():find(
+        searchText:lower(),
+        1,
+        true
+    ) ~= nil
 end
 
 local function RefreshList()
@@ -56,20 +88,34 @@ local function RefreshList()
         return
     end
 
-    local searchText = AddCharUI.Search:GetText()
-    local members = GetAvailableMembers()
+    local searchText =
+        AddCharUI.Search:GetText()
+
+    local members =
+        GetAvailableMembers()
 
     local filteredMembers = {}
 
-    for _, member in ipairs(members) do
+    for _, member in ipairs(
+        members
+    ) do
 
-        if MatchesSearch(member.name, searchText) then
-            table.insert(filteredMembers, member)
+        if MatchesSearch(
+            member.name,
+            searchText
+        ) then
+
+            table.insert(
+                filteredMembers,
+                member
+            )
+
         end
 
     end
 
-    AddCharUI.Members = filteredMembers
+    AddCharUI.Members =
+        filteredMembers
 
     FauxScrollFrame_Update(
         AddCharUI.ScrollFrame,
@@ -78,27 +124,54 @@ local function RefreshList()
         ROW_HEIGHT
     )
 
-    local offset = FauxScrollFrame_GetOffset(AddCharUI.ScrollFrame)
+    local offset =
+        FauxScrollFrame_GetOffset(
+            AddCharUI.ScrollFrame
+        )
 
-    for rowIndex = 1, AddCharUI.VisibleRows do
+    for rowIndex = 1,
+        AddCharUI.VisibleRows do
 
-        local row = AddCharUI.Rows[rowIndex]
-        local memberIndex = offset + rowIndex
-        local member = filteredMembers[memberIndex]
+        local row =
+            AddCharUI.Rows[rowIndex]
+
+        local memberIndex =
+            offset + rowIndex
+
+        local member =
+            filteredMembers[
+                memberIndex
+            ]
 
         if member then
 
-            row.FullName = member.name
+            row.FullName =
+                member.name
 
-            local r, g, b = GBM.Utils.GetClassColor(member.class)
+            local r, g, b =
+                GBM.Utils.GetClassColor(
+                    member.class
+                )
 
-            row.Text:SetTextColor(r, g, b)
-            row.Text:SetText(member.name)
+            row.Text:SetTextColor(
+                r,
+                g,
+                b
+            )
 
-            if AddCharUI.SelectedName == member.name then
+            row.Text:SetText(
+                member.name
+            )
+
+            if AddCharUI.SelectedName
+                == member.name then
+
                 row.Highlight:Show()
+
             else
+
                 row.Highlight:Hide()
+
             end
 
             row:Show()
@@ -106,18 +179,31 @@ local function RefreshList()
         else
 
             row.FullName = nil
+
             row.Highlight:Hide()
+
             row:Hide()
 
         end
+
     end
 end
 
-local function CreateRow(parent, index)
+local function CreateRow(
+    parent,
+    index
+)
 
-    local row = CreateFrame("Button", nil, parent)
+    local row =
+        CreateFrame(
+            "Button",
+            nil,
+            parent
+        )
 
-    row:SetHeight(ROW_HEIGHT)
+    row:SetHeight(
+        ROW_HEIGHT
+    )
 
     row:SetPoint(
         "TOPLEFT",
@@ -135,81 +221,134 @@ local function CreateRow(parent, index)
         -(index - 1) * ROW_HEIGHT
     )
 
-    row.Text = row:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontHighlight"
+    row.Text =
+        row:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontHighlight"
+        )
+
+    row.Text:SetPoint(
+        "LEFT",
+        10,
+        0
     )
 
-    row.Text:SetPoint("LEFT", 10, 0)
-    row.Text:SetJustifyH("LEFT")
+    row.Text:SetJustifyH(
+        "LEFT"
+    )
 
-    row.Highlight = row:CreateTexture(nil, "BACKGROUND")
+    row.Highlight =
+        row:CreateTexture(
+            nil,
+            "BACKGROUND"
+        )
+
     row.Highlight:SetAllPoints()
-    row.Highlight:SetColorTexture(1, 1, 1, 0.08)
+
+    row.Highlight:SetColorTexture(
+        1,
+        1,
+        1,
+        0.08
+    )
+
     row.Highlight:Hide()
 
     row:SetHighlightTexture(
         "Interface\\QuestFrame\\UI-QuestTitleHighlight"
     )
 
-    row:SetScript("OnClick", function(self)
+    row:SetScript(
+        "OnClick",
+        function(self)
 
-        if not self.FullName then
-            return
+            if not self.FullName then
+                return
+            end
+
+            AddCharUI.SelectedName =
+                self.FullName
+
+            for _, otherRow in ipairs(
+                AddCharUI.Rows
+            ) do
+
+                otherRow.Highlight:Hide()
+
+            end
+
+            self.Highlight:Show()
+
+            AddCharUI.AddButton:Enable()
+
         end
-
-        AddCharUI.SelectedName = self.FullName
-
-        for _, otherRow in ipairs(AddCharUI.Rows) do
-            otherRow.Highlight:Hide()
-        end
-
-        self.Highlight:Show()
-
-        AddCharUI.AddButton:Enable()
-
-    end)
+    )
 
     return row
 end
 
 local function CreateWindow()
 
-    local frame = CreateFrame(
-        "Frame",
-        "GBMBankCharsFrame",
-        UIParent,
-        "BasicFrameTemplateWithInset"
+    local frame =
+        CreateFrame(
+            "Frame",
+            "GBMBankCharsFrame",
+            UIParent,
+            "BasicFrameTemplateWithInset"
+        )
+
+    frame:SetSize(
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT
     )
 
-    frame:SetSize(WINDOW_WIDTH, WINDOW_HEIGHT)
-    frame:SetPoint("CENTER")
+    frame:SetPoint(
+        "CENTER"
+    )
 
     frame:SetMovable(true)
     frame:EnableMouse(true)
-    frame:RegisterForDrag("LeftButton")
+    frame:RegisterForDrag(
+        "LeftButton"
+    )
 
-    frame:SetScript("OnDragStart", frame.StartMoving)
-    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+    frame:SetScript(
+        "OnDragStart",
+        frame.StartMoving
+    )
 
-    frame.TitleText:SetText("Add Bank Character")
+    frame:SetScript(
+        "OnDragStop",
+        frame.StopMovingOrSizing
+    )
+
+    frame.TitleText:SetText(
+        L.ADD_BANK_CHAR
+    )
 
     frame:Hide()
 
     return frame
 end
 
-local function CreateSearch(frame)
+local function CreateSearch(
+    frame
+)
 
-    local search = CreateFrame(
-        "EditBox",
-        nil,
-        frame,
-        "InputBoxTemplate"
+    local search =
+        CreateFrame(
+            "EditBox",
+            nil,
+            frame,
+            "InputBoxTemplate"
+        )
+
+    search:SetSize(
+        300,
+        30
     )
 
-    search:SetSize(300, 30)
     search:SetPoint(
         "TOPLEFT",
         frame,
@@ -218,20 +357,40 @@ local function CreateSearch(frame)
         -45
     )
 
-    search:SetAutoFocus(false)
+    search:SetAutoFocus(
+        false
+    )
 
-    search:SetTextInsets(8, 8, 0, 0)
+    search:SetTextInsets(
+        8,
+        8,
+        0,
+        0
+    )
 
-    search:SetScript("OnTextChanged", function()
-        RefreshList()
-    end)
+    search:SetScript(
+        "OnTextChanged",
+        function()
 
-    AddCharUI.Search = search
+            RefreshList()
+
+        end
+    )
+
+    AddCharUI.Search =
+        search
 end
 
-local function CreateList(frame)
+local function CreateList(
+    frame
+)
 
-    local list = CreateFrame("Frame", nil, frame)
+    local list =
+        CreateFrame(
+            "Frame",
+            nil,
+            frame
+        )
 
     list:SetPoint(
         "TOPLEFT",
@@ -249,14 +408,16 @@ local function CreateList(frame)
         55
     )
 
-    AddCharUI.List = list
+    AddCharUI.List =
+        list
 
-    local scrollFrame = CreateFrame(
-        "ScrollFrame",
-        nil,
-        frame,
-        "FauxScrollFrameTemplate"
-    )
+    local scrollFrame =
+        CreateFrame(
+            "ScrollFrame",
+            nil,
+            frame,
+            "FauxScrollFrameTemplate"
+        )
 
     scrollFrame:SetPoint(
         "TOPLEFT",
@@ -274,49 +435,66 @@ local function CreateList(frame)
         0
     )
 
-    scrollFrame:SetScript("OnVerticalScroll", function(
-        self,
-        offset
-    )
-
-        FauxScrollFrame_OnVerticalScroll(
+    scrollFrame:SetScript(
+        "OnVerticalScroll",
+        function(
             self,
-            offset,
-            ROW_HEIGHT,
-            RefreshList
+            offset
         )
 
-    end)
+            FauxScrollFrame_OnVerticalScroll(
+                self,
+                offset,
+                ROW_HEIGHT,
+                RefreshList
+            )
 
-    AddCharUI.ScrollFrame = scrollFrame
-
-    local visibleRows = math.floor(
-        list:GetHeight() / ROW_HEIGHT
+        end
     )
 
-    AddCharUI.VisibleRows = visibleRows
-    AddCharUI.Rows = {}
+    AddCharUI.ScrollFrame =
+        scrollFrame
 
-    for index = 1, visibleRows do
-
-        AddCharUI.Rows[index] = CreateRow(
-            list,
-            index
+    local visibleRows =
+        math.floor(
+            list:GetHeight()
+            / ROW_HEIGHT
         )
+
+    AddCharUI.VisibleRows =
+        visibleRows
+
+    AddCharUI.Rows =
+        {}
+
+    for index = 1,
+        visibleRows do
+
+        AddCharUI.Rows[index] =
+            CreateRow(
+                list,
+                index
+            )
 
     end
 end
 
-local function CreateButtons(frame)
+local function CreateButtons(
+    frame
+)
 
-    local cancelButton = CreateFrame(
-        "Button",
-        nil,
-        frame,
-        "UIPanelButtonTemplate"
+    local cancelButton =
+        CreateFrame(
+            "Button",
+            nil,
+            frame,
+            "UIPanelButtonTemplate"
+        )
+
+    cancelButton:SetSize(
+        100,
+        24
     )
-
-    cancelButton:SetSize(100, 24)
 
     cancelButton:SetPoint(
         "BOTTOMRIGHT",
@@ -326,20 +504,31 @@ local function CreateButtons(frame)
         15
     )
 
-    cancelButton:SetText("Cancel")
-
-    cancelButton:SetScript("OnClick", function()
-        frame:Hide()
-    end)
-
-    local addButton = CreateFrame(
-        "Button",
-        nil,
-        frame,
-        "UIPanelButtonTemplate"
+    cancelButton:SetText(
+        L.CANCEL
     )
 
-    addButton:SetSize(100, 24)
+    cancelButton:SetScript(
+        "OnClick",
+        function()
+
+            frame:Hide()
+
+        end
+    )
+
+    local addButton =
+        CreateFrame(
+            "Button",
+            nil,
+            frame,
+            "UIPanelButtonTemplate"
+        )
+
+    addButton:SetSize(
+        100,
+        24
+    )
 
     addButton:SetPoint(
         "RIGHT",
@@ -349,42 +538,72 @@ local function CreateButtons(frame)
         0
     )
 
-    addButton:SetText("Add")
+    addButton:SetText(
+        L.ADD
+    )
+
     addButton:Disable()
 
-    addButton:SetScript("OnClick", function()
+    addButton:SetScript(
+        "OnClick",
+        function()
 
-        local fullName = AddCharUI.SelectedName
+            local fullName =
+                AddCharUI.SelectedName
 
-        if not fullName then
-            return
-        end
+            if not fullName then
+                return
+            end
 
-        if GBM.Guild.AddBankChar(fullName) then
-
-            print(
-                "|cFF00FF00GBM|r Bank Character added:",
+            if GBM.Guild.AddBankChar(
                 fullName
-            )
+            ) then
 
-            AddCharUI.SelectedName = nil
-            AddCharUI.AddButton:Disable()
-            AddCharUI.Search:SetText("")
+                print(
+                    "|cFF00FF00GBM|r "
+                    .. L.BANK_CHAR_ADDED,
+                    fullName
+                )
+
+                AddCharUI.SelectedName =
+                    nil
+
+                AddCharUI.AddButton:
+                    Disable()
+
+                AddCharUI.Search:
+                    SetText("")
+
+                RefreshList()
+
+            end
+
         end
-    end)
+    )
 
-    AddCharUI.AddButton = addButton
+    AddCharUI.AddButton =
+        addButton
 end
 
 function AddCharUI.Initialize()
 
-    local frame = CreateWindow()
+    local frame =
+        CreateWindow()
 
-    CreateSearch(frame)
-    CreateList(frame)
-    CreateButtons(frame)
+    CreateSearch(
+        frame
+    )
 
-    AddCharUI.Frame = frame
+    CreateList(
+        frame
+    )
+
+    CreateButtons(
+        frame
+    )
+
+    AddCharUI.Frame =
+        frame
 
     RefreshList()
 
@@ -396,13 +615,19 @@ function AddCharUI.Show()
         return
     end
 
-    AddCharUI.SelectedName = nil
-    AddCharUI.Search:SetText("")
+    AddCharUI.SelectedName =
+        nil
+
+    AddCharUI.Search:SetText(
+        ""
+    )
+
     AddCharUI.AddButton:Disable()
 
     RefreshList()
 
     AddCharUI.Frame:Show()
+
 end
 
 function AddCharUI.Hide()

@@ -1,291 +1,344 @@
 local GBM = GBM
+
 local UI = GBM.UI
 
 UI.Bank = {}
+
 local Bank = UI.Bank
 
-local function CreateTitle(parent)
+local L = GBM.L
 
-    local title = parent:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormalLarge"
-    )
+local ROW_HEIGHT = 42
+
+local WINDOW_PADDING = 20
+
+local LIST_TOP = -116
+
+local function CreateTitle()
+
+    local title =
+        Bank.Frame:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormalLarge"
+        )
 
     title:SetPoint(
         "TOPLEFT",
-        parent,
+        Bank.Frame,
         "TOPLEFT",
-        10,
-        -10
+        WINDOW_PADDING,
+        -45
     )
 
-    title:SetText("Bank")
+    title:SetText(
+        L.BANK
+    )
 
-    return title
+    Bank.Title =
+        title
+
 end
 
-local function CreateSearch(parent)
+local function CreateSearch()
 
-    local search = CreateFrame(
-        "EditBox",
-        nil,
-        parent,
-        "InputBoxTemplate"
+    local search =
+        CreateFrame(
+            "EditBox",
+            nil,
+            Bank.Frame,
+            "InputBoxTemplate"
+        )
+
+    search:SetSize(
+        300,
+        30
     )
-
-    search:SetSize(350, 30)
 
     search:SetPoint(
-        "TOPLEFT",
-        parent,
-        "TOPLEFT",
-        10,
-        -45
-    )
-
-    search:SetAutoFocus(false)
-
-    search:SetTextInsets(8, 8, 0, 0)
-
-    search:SetScript("OnTextChanged", function()
-
-        Bank.Refresh()
-
-    end)
-
-    Bank.Search = search
-
-    return search
-end
-
-local function CreateBankCharLabel(parent)
-
-    local label = parent:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-    )
-
-    label:SetPoint(
         "TOPRIGHT",
-        parent,
+        Bank.Frame,
         "TOPRIGHT",
-        -140,
-        -55
+        -WINDOW_PADDING,
+        -42
     )
 
-    label:SetText("Bankchar:")
-
-    Bank.BankCharLabel = label
-
-    return label
-end
-
-local function CreateBankCharSelector(parent)
-
-    local selector = CreateFrame(
-        "Button",
-        nil,
-        parent,
-        "UIPanelButtonTemplate"
+    search:SetAutoFocus(
+        false
     )
 
-    selector:SetSize(120, 26)
-
-    selector:SetPoint(
-        "TOPRIGHT",
-        parent,
-        "TOPRIGHT",
-        -10,
-        -45
-    )
-
-    selector:SetText("Alle")
-
-    Bank.BankCharSelector = selector
-
-    return selector
-end
-
-local function CreateHeader(parent)
-
-    local header = CreateFrame(
-        "Frame",
-        nil,
-        parent
-    )
-
-    header:SetPoint(
-        "TOPLEFT",
-        parent,
-        "TOPLEFT",
-        10,
-        -85
-    )
-
-    header:SetPoint(
-        "TOPRIGHT",
-        parent,
-        "TOPRIGHT",
-        -10,
-        -85
-    )
-
-    header:SetHeight(28)
-
-    local item = header:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-    )
-
-    item:SetPoint(
-        "LEFT",
-        10,
+    search:SetTextInsets(
+        8,
+        8,
+        0,
         0
     )
 
-    item:SetText("Item")
+    search:SetScript(
+        "OnTextChanged",
+        function()
 
-    local total = header:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
+            Bank.Refresh()
+
+        end
     )
 
-    total:SetPoint(
-        "RIGHT",
-        -260,
-        0
-    )
+    Bank.Search =
+        search
 
-    total:SetText("Gesamt")
-
-    local reserved = header:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-    )
-
-    reserved:SetPoint(
-        "RIGHT",
-        -130,
-        0
-    )
-
-    reserved:SetText("Reserviert")
-
-    local available = header:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-    )
-
-    available:SetPoint(
-        "RIGHT",
-        -10,
-        0
-    )
-
-    available:SetText("Frei")
-
-    Bank.Header = header
-
-    return header
 end
 
-local function CreateDivider(parent)
+local function CreateDivider()
 
-    local divider = parent:CreateTexture(
-        nil,
-        "ARTWORK"
-    )
-
-    divider:SetPoint(
-        "TOPLEFT",
-        parent,
-        "TOPLEFT",
-        10,
-        -113
-    )
-
-    divider:SetPoint(
-        "TOPRIGHT",
-        parent,
-        "TOPRIGHT",
-        -10,
-        -113
-    )
-
-    divider:SetHeight(1)
+    local divider =
+        Bank.Frame:CreateTexture(
+            nil,
+            "ARTWORK"
+        )
 
     divider:SetColorTexture(
         1,
         1,
         1,
-        0.15
+        0.08
     )
 
-    Bank.Divider = divider
+    divider:SetHeight(
+        1
+    )
 
-    return divider
+    divider:SetPoint(
+        "TOPLEFT",
+        Bank.Frame,
+        "TOPLEFT",
+        WINDOW_PADDING,
+        -78
+    )
+
+    divider:SetPoint(
+        "TOPRIGHT",
+        Bank.Frame,
+        "TOPRIGHT",
+        -WINDOW_PADDING,
+        -78
+    )
+
+    Bank.Divider =
+        divider
+
 end
 
-local function CreateList(parent)
+local function CreateList()
 
-    local list = CreateFrame(
-        "Frame",
-        nil,
-        parent
-    )
+    local scrollFrame =
+        CreateFrame(
+            "ScrollFrame",
+            nil,
+            Bank.Frame,
+            "UIPanelScrollFrameTemplate"
+        )
 
-    list:SetPoint(
+    scrollFrame:SetPoint(
         "TOPLEFT",
-        parent,
+        Bank.Frame,
         "TOPLEFT",
-        10,
-        -120
+        WINDOW_PADDING,
+        LIST_TOP
     )
 
-    list:SetPoint(
+    scrollFrame:SetPoint(
         "BOTTOMRIGHT",
-        parent,
+        Bank.Frame,
         "BOTTOMRIGHT",
-        -10,
-        10
+        -35,
+        WINDOW_PADDING
     )
 
-    Bank.List = list
+    local content =
+        CreateFrame(
+            "Frame",
+            nil,
+            scrollFrame
+        )
 
-    return list
+    content:SetSize(
+        1,
+        1
+    )
+
+    scrollFrame:SetScrollChild(
+        content
+    )
+
+    Bank.ScrollFrame =
+        scrollFrame
+
+    Bank.Content =
+        content
+
+    Bank.Rows =
+        {}
+
+    scrollFrame:SetScript(
+        "OnSizeChanged",
+        function()
+
+            if Bank.Layout then
+
+                Bank.Layout.UpdateListWidth()
+
+            end
+
+        end
+    )
+
+end
+
+local function EnsureRows(
+    count
+)
+
+    for index = 1, count do
+
+        if not Bank.Rows[index] then
+
+            Bank.Rows[index] =
+                Bank.RowsModule.Create()
+
+            local row =
+                Bank.Rows[index]
+
+            row:SetPoint(
+                "TOPLEFT",
+                Bank.Content,
+                "TOPLEFT",
+                0,
+                -(index - 1)
+                    * ROW_HEIGHT
+            )
+
+            row:SetPoint(
+                "TOPRIGHT",
+                Bank.Content,
+                "TOPRIGHT",
+                0,
+                -(index - 1)
+                    * ROW_HEIGHT
+            )
+
+        end
+
+    end
+
+end
+
+local function HideRows()
+
+    for _, row in ipairs(
+        Bank.Rows
+    ) do
+
+        row:Hide()
+
+    end
+
+end
+
+local function UpdateContentHeight(
+    count
+)
+
+    Bank.Content:SetHeight(
+        math.max(
+            count * ROW_HEIGHT,
+            1
+        )
+    )
+
 end
 
 function Bank.Refresh()
 
-    if not Bank.List then
+    if not Bank.Search then
         return
     end
 
-    -- Die eigentliche Item-Liste kommt später
-    -- über den BankScanner und die BankDB.
+    local searchText =
+        Bank.Search:GetText()
+
+    local itemIDs =
+        Bank.Data.GetFilteredItems(
+            searchText
+        )
+
+    HideRows()
+
+    EnsureRows(
+        #itemIDs
+    )
+
+    for index, itemID in ipairs(
+        itemIDs
+    ) do
+
+        local overview =
+            GBM.BankDB.GetItemOverview(
+                itemID
+            )
+
+        if overview then
+
+            local row =
+                Bank.Rows[index]
+
+            Bank.RowsModule.Update(
+                row,
+                itemID,
+                overview
+            )
+
+        end
+
+    end
+
+    UpdateContentHeight(
+        #itemIDs
+    )
+
+    if Bank.Layout then
+
+        Bank.Layout.UpdateListWidth()
+
+    end
 
 end
 
 function Bank.Initialize()
 
-    local view = UI.Views.bank
+    Bank.Frame =
+        UI.Views.bank
 
-    if not view then
-        return
-    end
+    Bank.Data =
+        UI.BankData
 
-    CreateTitle(view)
-    CreateSearch(view)
-    CreateBankCharLabel(view)
-    CreateBankCharSelector(view)
-    CreateHeader(view)
-    CreateDivider(view)
-    CreateList(view)
+    Bank.Layout =
+        UI.BankLayout
+
+    Bank.RowsModule =
+        UI.BankRows
+
+    CreateTitle()
+
+    CreateSearch()
+
+    CreateDivider()
+
+    CreateList()
+
+    Bank.Layout.CreateHeader()
+
+    Bank.Layout.UpdateListWidth()
+
+    Bank.Refresh()
 
 end

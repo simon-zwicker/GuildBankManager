@@ -26,6 +26,12 @@
         "RAID",
         "RAID_CLASS_COLORS",
         "PanelTemplates_SelectTab",
-        "PanelTemplates_DeselectTab"
+        "PanelTemplates_DeselectTab",
+        "StaticPopupDialogs",
+        "StaticPopup_Show",
+        "Add",
+        "GuildBankFrame",
+        "STANDARD_TEXT_FONT",
+        "ITEM_QUALITY_COLORS"
     ]
 }

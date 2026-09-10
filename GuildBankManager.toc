@@ -5,23 +5,32 @@
 ## Version: 0.1.0
 ## SavedVariables: GuildBankManager_GuildDB, GuildBankManager_BankDB
 
-Core/Init.lua
-Core/Utils.lua
-Core/WoWAPI.lua
+Core\Init.lua
+Localization\enUS.lua
+Core\Utils.lua
+Core\WoWAPI.lua
 
-Database/GuildDB.lua
-Database/BankDB.lua
+Database\GuildDB.lua
+Database\BankDB.lua
 
-Guild/Guild.lua 
-Guild/Members.lua
-Guild/BankChars.lua
+Guild\Guild.lua
+Guild\Members.lua
+Guild\BankChars.lua
 
-UI/Main.lua
-UI/Bank/Bank.lua
-UI/Requests.lua
-UI/Statistics.lua
-UI/Usage.lua
-UI/Settings/Settings.lua
-UI/Settings/AddChar.lua
+Requests\Requests.lua
 
-Core/Events.lua
+UI\Main.lua
+
+UI\Bank\Bank.lua
+UI\Bank\BankData.lua
+UI\Bank\BankLayout.lua
+UI\Bank\BankRows.lua
+UI\Bank\BankScanner.lua
+
+UI\Requests.lua
+UI\Statistics.lua
+UI\Usage.lua
+UI\Settings\Settings.lua
+UI\Settings\AddChar.lua
+
+Core\Events.lua

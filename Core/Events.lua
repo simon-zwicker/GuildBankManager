@@ -1,11 +1,26 @@
 local GBM = GBM
 
 GBM.Events = {}
+
 local Events = GBM.Events
 
-local frame = CreateFrame("Frame")
+local L = GBM.L
 
-local function OnAddonLoaded(_, event, loadedAddonName)
+local frame = CreateFrame(
+    "Frame"
+)
+
+local syncPending = false
+
+local function OnAddonLoaded(
+    frame,
+    event,
+    loadedAddonName
+)
+
+    if event ~= "ADDON_LOADED" then
+        return
+    end
 
     if loadedAddonName ~= GBM.Name then
         return
@@ -13,31 +28,108 @@ local function OnAddonLoaded(_, event, loadedAddonName)
 
     GBM.GuildDB.Initialize()
     GBM.BankDB.Initialize()
-    GBM.Guild.Initialize()
 
+    GBM.Guild.Initialize()
     GBM.WoW.RequestGuildRoster()
 
     GBM.UI.Initialize()
-    GBM.UI.Show()
 
-    frame:UnregisterEvent("ADDON_LOADED")
-    frame:RegisterEvent("GUILD_ROSTER_UPDATE")
+    frame:UnregisterEvent(
+        "ADDON_LOADED"
+    )
 
-    print("|cFF00FF00GBM|r Addon loaded - Version: " .. GBM.Version)
+    frame:RegisterEvent(
+        "GUILD_ROSTER_UPDATE"
+    )
+
+    frame:RegisterEvent(
+        "BANKFRAME_OPENED"
+    )
+
+    frame:RegisterEvent(
+        "BANKFRAME_CLOSED"
+    )
+
+    print(
+        "|cFF00FF00GBM|r "
+        .. string.format(
+            L.LOADED,
+            GBM.Version
+        )
+    )
+
 end
 
 local function OnGuildRosterUpdate()
+
     GBM.Guild.UpdateMembers()
+
 end
 
-frame:SetScript("OnEvent", function(...)
-    local event = select(2, ...)
+local function OnBankFrameOpened()
 
-    if event == "ADDON_LOADED" then
-        OnAddonLoaded(...)
-    elseif event == "GUILD_ROSTER_UPDATE" then
-        OnGuildRosterUpdate()
+    if syncPending then
+        return
     end
-end)
 
-frame:RegisterEvent("ADDON_LOADED")
+    if not GBM.BankScanner.IsAvailable() then
+        return
+    end
+
+    syncPending = true
+
+    C_Timer.After(
+        0.3,
+        function()
+
+            syncPending = false
+
+            GBM.BankScanner.Sync()
+
+        end
+    )
+
+end
+
+local function OnBankFrameClosed()
+
+    syncPending = false
+
+end
+
+frame:SetScript(
+    "OnEvent",
+    function(
+        frame,
+        event,
+        loadedAddonName
+    )
+
+        if event == "ADDON_LOADED" then
+
+            OnAddonLoaded(
+                frame,
+                event,
+                loadedAddonName
+            )
+
+        elseif event == "GUILD_ROSTER_UPDATE" then
+
+            OnGuildRosterUpdate()
+
+        elseif event == "BANKFRAME_OPENED" then
+
+            OnBankFrameOpened()
+
+        elseif event == "BANKFRAME_CLOSED" then
+
+            OnBankFrameClosed()
+
+        end
+
+    end
+)
+
+frame:RegisterEvent(
+    "ADDON_LOADED"
+)
