@@ -17,6 +17,9 @@ local function OnAddonLoaded(_, event, loadedAddonName)
 
     GBM.WoW.RequestGuildRoster()
 
+    GBM.UI.Initialize()
+    GBM.UI.Show()
+
     frame:UnregisterEvent("ADDON_LOADED")
     frame:RegisterEvent("GUILD_ROSTER_UPDATE")
 

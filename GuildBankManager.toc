@@ -12,6 +12,16 @@ Core/WoWAPI.lua
 Database/GuildDB.lua
 Database/BankDB.lua
 
-Guild/Guild.lua
+Guild/Guild.lua 
+Guild/Members.lua
+Guild/BankChars.lua
+
+UI/Main.lua
+UI/Bank/Bank.lua
+UI/Requests.lua
+UI/Statistics.lua
+UI/Usage.lua
+UI/Settings/Settings.lua
+UI/Settings/AddChar.lua
 
 Core/Events.lua

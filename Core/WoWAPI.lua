@@ -7,6 +7,11 @@ function WoW.GetPlayerName()
     return UnitName("player")
 end
 
+function WoW.GetFullPlayerName(name)
+    name = name or WoW.GetPlayerName()
+    return name .. "-" .. WoW.GetPlayerRealm()
+end
+
 function WoW.GetPlayerRealm()
     return GetRealmName()
 end
@@ -26,7 +31,14 @@ function WoW.GetGuildInfo()
 end
 
 function WoW.RequestGuildRoster()
-    GuildRoster()
+    if C_GuildInfo and C_GuildInfo.GuildRoster then
+        C_GuildInfo.GuildRoster()
+        return
+    end
+
+    if GuildRoster then
+        GuildRoster()
+    end
 end
 
 function WoW.GetGuildMemberCount()
@@ -41,7 +53,7 @@ function WoW.GetGuildMemberInfo(index)
     end
 
     return {
-        name = name, 
+        fullName = name,
         rank = rankName,
         rankIndex = rankIndex,
         level = level,

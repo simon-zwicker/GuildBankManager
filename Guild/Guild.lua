@@ -46,3 +46,29 @@ function Guild.UpdateMembers()
     db.members = members
     return members
 end
+
+function Guild.IsMember(name)
+    local db = GBM.GuildDB.Get()
+
+    if not db then
+        return nil
+    end
+
+    local givenName = name or GBM.WoW.GetPlayerName()
+    local fullName = GBM.WoW.GetFullPlayerName(givenName)
+
+    return db.members[fullName] ~= nil
+end
+
+function Guild.IsBankChar(name)
+    local db = GBM.GuildDB.Get()
+
+    if not db then
+        return nil
+    end
+
+    local givenName = name or GBM.WoW.GetPlayerName()
+    local fullName = GBM.WoW.GetFullPlayerName(givenName)
+
+    return db.bankChars[fullName] ~= nil
+end

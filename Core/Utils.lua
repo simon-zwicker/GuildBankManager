@@ -14,3 +14,17 @@ end
 function Utils.isNumber(value)
     return type(value) == "number"
 end
+
+function Utils.GetClassColor(class)
+    if not class then
+        return 1, 1, 1
+    end
+
+    local color = RAID_CLASS_COLORS[class]
+
+    if not color then
+        return 1, 1, 1
+    end
+
+    return color.r, color.g, color.b
+end
