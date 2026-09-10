@@ -104,11 +104,13 @@ function BankDB.Initialize()
     BankDB.Data = db
 
     return db
+
 end
 
 function BankDB.Get()
 
     return BankDB.Data
+
 end
 
 function BankDB.GetBankChar(
@@ -127,6 +129,7 @@ function BankDB.GetBankChar(
     end
 
     return db.bankChars[fullName]
+
 end
 
 function BankDB.SetBankChar(
@@ -157,6 +160,7 @@ function BankDB.SetBankChar(
         data
 
     return true
+
 end
 
 function BankDB.GetBankCharItemCount(
@@ -183,6 +187,7 @@ function BankDB.GetBankCharItemCount(
 
     return bankChar.items[itemID]
         or 0
+
 end
 
 function BankDB.SetBankCharItemCount(
@@ -199,13 +204,8 @@ function BankDB.SetBankCharItemCount(
         return false
     end
 
-    if not GBM.Utils.IsTable(
-        quantity
-    )
-    and type(quantity) ~= "number" then
-
+    if type(quantity) ~= "number" then
         return false
-
     end
 
     local bankChar =
@@ -245,6 +245,7 @@ function BankDB.SetBankCharItemCount(
         )
 
     return true
+
 end
 
 function BankDB.AddBankCharItemCount(
@@ -268,6 +269,7 @@ function BankDB.AddBankCharItemCount(
         itemID,
         current + amount
     )
+
 end
 
 function BankDB.GetReservedAmount(
@@ -298,7 +300,7 @@ function BankDB.GetReservedAmount(
 
         if request.acceptedBy == fullName
             and request.itemID == itemID
-            and request.status == "accepted" then
+            and request.status == "reserved" then
 
             reserved =
                 reserved
@@ -309,6 +311,7 @@ function BankDB.GetReservedAmount(
     end
 
     return reserved
+
 end
 
 function BankDB.GetAvailableAmount(
@@ -337,6 +340,7 @@ function BankDB.GetAvailableAmount(
     end
 
     return availableAmount
+
 end
 
 function BankDB.CanFulfill(
@@ -364,6 +368,7 @@ function BankDB.CanFulfill(
         )
 
     return available >= amount
+
 end
 
 function BankDB.GetTotalReservedAmount(
@@ -388,7 +393,7 @@ function BankDB.GetTotalReservedAmount(
     ) do
 
         if request.itemID == itemID
-            and request.status == "accepted" then
+            and request.status == "reserved" then
 
             reserved =
                 reserved
@@ -399,6 +404,7 @@ function BankDB.GetTotalReservedAmount(
     end
 
     return reserved
+
 end
 
 function BankDB.GetTotalAmount(
@@ -435,6 +441,7 @@ function BankDB.GetTotalAmount(
     end
 
     return total
+
 end
 
 function BankDB.GetAvailableTotalAmount(
@@ -459,6 +466,7 @@ function BankDB.GetAvailableTotalAmount(
     end
 
     return available
+
 end
 
 function BankDB.GetItemOverview(
@@ -539,4 +547,5 @@ function BankDB.GetItemOverview(
         available = available,
         bankChars = bankChars,
     }
+
 end

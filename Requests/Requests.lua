@@ -4,10 +4,10 @@ GBM.Requests = {}
 
 local Requests = GBM.Requests
 
-local STATUS_PENDING = "pending"
-local STATUS_ACCEPTED = "accepted"
+local STATUS_RESERVED = "reserved"
 local STATUS_REJECTED = "rejected"
 local STATUS_FULFILLED = "fulfilled"
+local STATUS_CANCELLED = "cancelled"
 
 local REQUEST_PREFIX = "REQ-"
 
@@ -48,6 +48,7 @@ local function GenerateRequestID()
         REQUEST_PREFIX,
         highestNumber + 1
     )
+
 end
 
 local function GetPlayerFullName()
@@ -56,7 +57,9 @@ local function GetPlayerFullName()
 
 end
 
-local function GetItemName(itemID)
+local function GetItemName(
+    itemID
+)
 
     if not itemID then
         return nil
@@ -68,7 +71,9 @@ local function GetItemName(itemID)
 
 end
 
-local function IsValidAmount(amount)
+local function IsValidAmount(
+    amount
+)
 
     return type(amount) == "number"
         and amount > 0
@@ -91,9 +96,7 @@ local function GetRequest(
         return nil
     end
 
-    return db.requests[
-        requestID
-    ]
+    return db.requests[requestID]
 
 end
 
@@ -111,15 +114,9 @@ local function IsOfficer()
 
 end
 
-function Requests.GetStatusPending()
+function Requests.GetStatusReserved()
 
-    return STATUS_PENDING
-
-end
-
-function Requests.GetStatusAccepted()
-
-    return STATUS_ACCEPTED
+    return STATUS_RESERVED
 
 end
 
@@ -132,6 +129,12 @@ end
 function Requests.GetStatusFulfilled()
 
     return STATUS_FULFILLED
+
+end
+
+function Requests.GetStatusCancelled()
+
+    return STATUS_CANCELLED
 
 end
 
@@ -197,6 +200,26 @@ function Requests.GetByStatus(
 
 end
 
+function Requests.GetReservedTotal(
+    itemID
+)
+
+    return GBM.BankDB.GetTotalReservedAmount(
+        itemID
+    )
+
+end
+
+function Requests.GetAvailableAmount(
+    itemID
+)
+
+    return GBM.BankDB.GetAvailableTotalAmount(
+        itemID
+    )
+
+end
+
 function Requests.Create(
     itemID,
     amount
@@ -206,17 +229,13 @@ function Requests.Create(
         GBM.BankDB.Get()
 
     if not db then
-
         return nil,
             "database_not_initialized"
-
     end
 
     if not itemID then
-
         return nil,
             "missing_item"
-
     end
 
     if not IsValidAmount(
@@ -225,6 +244,18 @@ function Requests.Create(
 
         return nil,
             "invalid_amount"
+
+    end
+
+    local available =
+        GBM.BankDB.GetAvailableTotalAmount(
+            itemID
+        )
+
+    if amount > available then
+
+        return nil,
+            "insufficient_stock"
 
     end
 
@@ -254,10 +285,11 @@ function Requests.Create(
         requestedBy =
             GetPlayerFullName(),
 
-        requestedAt = time(),
+        requestedAt =
+            time(),
 
         status =
-            STATUS_PENDING,
+            STATUS_RESERVED,
 
         acceptedBy = nil,
 
@@ -267,11 +299,18 @@ function Requests.Create(
 
         fulfilledAt = nil,
 
+        cancelledBy = nil,
+
+        cancelledAt = nil,
+
+        rejectedBy = nil,
+
+        rejectedAt = nil,
+
     }
 
-    db.requests[
-        requestID
-    ] = request
+    db.requests[requestID] =
+        request
 
     return request
 
@@ -294,11 +333,10 @@ function Requests.CanAccept(
 
     end
 
-    if request.status
-        ~= STATUS_PENDING then
+    if request.status ~= STATUS_RESERVED then
 
         return false,
-            "request_not_pending"
+            "request_not_reserved"
 
     end
 
@@ -309,36 +347,27 @@ function Requests.CanAccept(
 
     end
 
-    local registered =
+    local guildDB =
         GBM.GuildDB.Get()
 
-    if not registered then
+    if not guildDB then
 
         return false,
             "guild_database_not_initialized"
 
     end
 
-    if not registered.bankChars[
-        bankChar
-    ] then
+    if not guildDB.bankChars[bankChar] then
 
         return false,
             "not_registered_bankchar"
 
     end
 
-    local available =
-        GBM.BankDB.GetAvailableAmount(
-            bankChar,
-            request.itemID
-        )
-
-    if available
-        < request.amount then
+    if request.acceptedBy then
 
         return false,
-            "insufficient_stock"
+            "request_already_accepted"
 
     end
 
@@ -359,19 +388,13 @@ function Requests.Accept(
         )
 
     if not canAccept then
-
-        return nil,
-            reason
-
+        return nil, reason
     end
 
     local request =
         GetRequest(
             requestID
         )
-
-    request.status =
-        STATUS_ACCEPTED
 
     request.acceptedBy =
         bankChar
@@ -399,11 +422,10 @@ function Requests.CanReject(
 
     end
 
-    if request.status
-        ~= STATUS_PENDING then
+    if request.status ~= STATUS_RESERVED then
 
         return false,
-            "request_not_pending"
+            "request_not_reserved"
 
     end
 
@@ -429,10 +451,7 @@ function Requests.Reject(
         )
 
     if not canReject then
-
-        return nil,
-            reason
-
+        return nil, reason
     end
 
     local request =
@@ -442,6 +461,71 @@ function Requests.Reject(
 
     request.status =
         STATUS_REJECTED
+
+    request.rejectedBy =
+        GetPlayerFullName()
+
+    request.rejectedAt =
+        time()
+
+    return request
+
+end
+
+function Requests.CanCancel(
+    requestID
+)
+
+    local request =
+        GetRequest(
+            requestID
+        )
+
+    if not request then
+
+        return false,
+            "request_not_found"
+
+    end
+
+    if request.status ~= STATUS_RESERVED then
+
+        return false,
+            "request_not_reserved"
+
+    end
+
+    return true
+
+end
+
+function Requests.Cancel(
+    requestID
+)
+
+    local canCancel,
+        reason =
+        Requests.CanCancel(
+            requestID
+        )
+
+    if not canCancel then
+        return nil, reason
+    end
+
+    local request =
+        GetRequest(
+            requestID
+        )
+
+    request.status =
+        STATUS_CANCELLED
+
+    request.cancelledBy =
+        GetPlayerFullName()
+
+    request.cancelledAt =
+        time()
 
     return request
 
@@ -464,23 +548,21 @@ function Requests.CanFulfill(
 
     end
 
-    if request.status
-        ~= STATUS_ACCEPTED then
+    if request.status ~= STATUS_RESERVED then
 
         return false,
-            "request_not_accepted"
+            "request_not_reserved"
 
     end
 
     if not request.acceptedBy then
 
         return false,
-            "missing_accepting_bankchar"
+            "request_not_accepted"
 
     end
 
-    if bankChar
-        ~= request.acceptedBy then
+    if bankChar ~= request.acceptedBy then
 
         return false,
             "wrong_bankchar"
@@ -493,8 +575,7 @@ function Requests.CanFulfill(
             request.itemID
         )
 
-    if available
-        < request.amount then
+    if available < request.amount then
 
         return false,
             "insufficient_stock"
@@ -518,10 +599,7 @@ function Requests.Fulfill(
         )
 
     if not canFulfill then
-
-        return nil,
-            reason
-
+        return nil, reason
     end
 
     local request =
@@ -605,20 +683,18 @@ function Requests.Delete(
 
     end
 
-    if request.status
-        == STATUS_ACCEPTED then
+    if request.status == STATUS_FULFILLED then
 
         return false,
-            "accepted_request_cannot_be_deleted"
+            "fulfilled_request_cannot_be_deleted"
 
     end
 
-    db =
+    local db =
         GBM.BankDB.Get()
 
-    db.requests[
-        requestID
-    ] = nil
+    db.requests[requestID] =
+        nil
 
     return true
 

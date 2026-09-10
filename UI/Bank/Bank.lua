@@ -205,27 +205,6 @@ local function EnsureRows(
             Bank.Rows[index] =
                 Bank.RowsModule.Create()
 
-            local row =
-                Bank.Rows[index]
-
-            row:SetPoint(
-                "TOPLEFT",
-                Bank.Content,
-                "TOPLEFT",
-                0,
-                -(index - 1)
-                    * ROW_HEIGHT
-            )
-
-            row:SetPoint(
-                "TOPRIGHT",
-                Bank.Content,
-                "TOPRIGHT",
-                0,
-                -(index - 1)
-                    * ROW_HEIGHT
-            )
-
         end
 
     end
@@ -238,19 +217,74 @@ local function HideRows()
         Bank.Rows
     ) do
 
-        row:Hide()
+        Bank.RowsModule.Hide(
+            row
+        )
 
     end
 
 end
 
+local function IsItemVisible(
+    itemIDs,
+    itemID
+)
+
+    if not itemID then
+        return false
+    end
+
+    for _, visibleItemID in ipairs(
+        itemIDs
+    ) do
+
+        if visibleItemID == itemID then
+
+            return true
+
+        end
+
+    end
+
+    return false
+
+end
+
+local function CalculateLayout(
+    itemCount
+)
+
+    local offset = 0
+
+    for index = 1, itemCount do
+
+        local row =
+            Bank.Rows[index]
+
+        Bank.RowsModule.SetPosition(
+            row,
+            offset
+        )
+
+        offset =
+            offset
+            + Bank.RowsModule.GetHeight(
+                row
+            )
+
+    end
+
+    return offset
+
+end
+
 local function UpdateContentHeight(
-    count
+    height
 )
 
     Bank.Content:SetHeight(
         math.max(
-            count * ROW_HEIGHT,
+            height,
             1
         )
     )
@@ -270,6 +304,21 @@ function Bank.Refresh()
         Bank.Data.GetFilteredItems(
             searchText
         )
+
+    if Bank.ExpandedRow
+        and not IsItemVisible(
+            itemIDs,
+            Bank.ExpandedRow.ItemID
+        ) then
+
+        Bank.RowsModule.Hide(
+            Bank.ExpandedRow
+        )
+
+        Bank.ExpandedRow =
+            nil
+
+    end
 
     HideRows()
 
@@ -301,8 +350,13 @@ function Bank.Refresh()
 
     end
 
+    local contentHeight =
+        CalculateLayout(
+            #itemIDs
+        )
+
     UpdateContentHeight(
-        #itemIDs
+        contentHeight
     )
 
     if Bank.Layout then

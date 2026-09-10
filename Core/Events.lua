@@ -28,6 +28,7 @@ local function OnAddonLoaded(
 
     GBM.GuildDB.Initialize()
     GBM.BankDB.Initialize()
+    GBM.Commands.Initialize()
 
     GBM.Guild.Initialize()
     GBM.WoW.RequestGuildRoster()

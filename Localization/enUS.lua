@@ -85,6 +85,8 @@ local ENGLISH = {
     REQUEST_WINDOW_UNAVAILABLE =
         "Request window is not available yet.",
 
+    REQUEST_AMOUNT_ERROR = "You should choose an amount\nbetween %d and %d.",
+
 }
 
 local function ApplyLocale(

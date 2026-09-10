@@ -24,6 +24,8 @@ UI\Main.lua
 UI\Bank\Bank.lua
 UI\Bank\BankData.lua
 UI\Bank\BankLayout.lua
+UI\Bank\BankNormalRow.lua
+UI\Bank\BankExtendedRow.lua
 UI\Bank\BankRows.lua
 UI\Bank\BankScanner.lua
 
@@ -33,4 +35,5 @@ UI\Usage.lua
 UI\Settings\Settings.lua
 UI\Settings\AddChar.lua
 
+Core\Commands.lua
 Core\Events.lua

@@ -7,369 +7,21 @@ UI.BankRows = {}
 
 local BankRows = UI.BankRows
 
-local L = GBM.L
-
 local ROW_HEIGHT = 42
-local ICON_SIZE = 36
 
-local ITEM_FONT_SIZE = 14
-local BANKCHAR_FONT_SIZE = 14
-
-local function SetRowFont(
+local function GetExtendedRow(
     row
 )
 
-    row.Item:SetFont(
-        STANDARD_TEXT_FONT,
-        ITEM_FONT_SIZE,
-        "OUTLINE"
-    )
-
-    row.Total:SetFont(
-        STANDARD_TEXT_FONT,
-        ITEM_FONT_SIZE,
-        "OUTLINE"
-    )
-
-    row.BankChars:SetFont(
-        STANDARD_TEXT_FONT,
-        BANKCHAR_FONT_SIZE,
-        "OUTLINE"
-    )
-
-    row.Reserved:SetFont(
-        STANDARD_TEXT_FONT,
-        ITEM_FONT_SIZE,
-        "OUTLINE"
-    )
-
-    row.Available:SetFont(
-        STANDARD_TEXT_FONT,
-        ITEM_FONT_SIZE,
-        "OUTLINE"
-    )
-
-end
-
-local function CreateText(
-    row
-)
-
-    local text =
-        row:CreateFontString(
-            nil,
-            "OVERLAY"
-        )
-
-    text:SetJustifyV(
-        "MIDDLE"
-    )
-
-    return text
-
-end
-
-local function CreateRequestButton(
-    row
-)
-
-    local button =
-        CreateFrame(
-            "Button",
-            nil,
-            row,
-            "UIPanelButtonTemplate"
-        )
-
-    button:SetSize(
-        82,
-        24
-    )
-
-    button:SetText(
-        L.REQUEST
-    )
-
-    button:SetScript(
-        "OnClick",
-        function()
-
-            if not row.ItemID then
-                return
-            end
-
-            if GBM.UI.Requests
-                and GBM.UI.Requests.OpenCreate then
-
-                GBM.UI.Requests.OpenCreate(
-                    row.ItemID
-                )
-
-            else
-
-                print(
-                    "|cFFFFFF00GBM|r "
-                    .. L.REQUEST_WINDOW_UNAVAILABLE
-                )
-
-            end
-
-        end
-    )
-
-    return button
-
-end
-
-local function ShowTooltip(
-    row
-)
-
-    if not row.ItemLink then
-        return
+    if not row then
+        return nil
     end
 
-    GameTooltip:SetOwner(
-        row,
-        "ANCHOR_RIGHT"
-    )
-
-    GameTooltip:SetHyperlink(
-        row.ItemLink
-    )
-
-    GameTooltip:Show()
+    return row.ExtendedRow
 
 end
 
-local function HideTooltip()
-
-    GameTooltip:Hide()
-
-end
-
-local function CreateRow(
-    parent
-)
-
-    local row =
-        CreateFrame(
-            "Button",
-            nil,
-            parent
-        )
-
-    row:SetHeight(
-        ROW_HEIGHT
-    )
-
-    row:RegisterForClicks(
-        "LeftButtonUp"
-    )
-
-    row.Icon =
-        row:CreateTexture(
-            nil,
-            "ARTWORK"
-        )
-
-    row.Icon:SetSize(
-        ICON_SIZE,
-        ICON_SIZE
-    )
-
-    row.Icon:SetPoint(
-        "LEFT",
-        row,
-        "LEFT",
-        5,
-        0
-    )
-
-    row.Item =
-        CreateText(
-            row
-        )
-
-    row.Item:SetJustifyH(
-        "LEFT"
-    )
-
-    row.Item:SetWordWrap(
-        false
-    )
-
-    row.Total =
-        CreateText(
-            row
-        )
-
-    row.Total:SetJustifyH(
-        "RIGHT"
-    )
-
-    row.BankChars =
-        CreateText(
-            row
-        )
-
-    row.BankChars:SetJustifyH(
-        "RIGHT"
-    )
-
-    row.BankChars:SetWordWrap(
-        false
-    )
-
-    row.Reserved =
-        CreateText(
-            row
-        )
-
-    row.Reserved:SetJustifyH(
-        "RIGHT"
-    )
-
-    row.Available =
-        CreateText(
-            row
-        )
-
-    row.Available:SetJustifyH(
-        "RIGHT"
-    )
-
-    row.Request =
-        CreateRequestButton(
-            row
-        )
-
-    row:SetScript(
-        "OnEnter",
-        function(self)
-
-            ShowTooltip(
-                self
-            )
-
-        end
-    )
-
-    row:SetScript(
-        "OnLeave",
-        function()
-
-            HideTooltip()
-
-        end
-    )
-
-    SetRowFont(
-        row
-    )
-
-    return row
-
-end
-
-local function SetBankCharText(
-    row,
-    overview
-)
-
-    local parts = {}
-
-    for _, bankChar in ipairs(
-        overview.bankChars or {}
-    ) do
-
-        local name =
-            bankChar.name
-            or ""
-
-        local amount =
-            bankChar.amount
-            or 0
-
-        local color =
-            {
-                1,
-                1,
-                1,
-            }
-
-        local plainName =
-            name:match(
-                "^[^-]+"
-            )
-
-        local guildDB =
-            GBM.GuildDB.Get()
-
-        local member =
-            guildDB
-            and guildDB.members
-            and guildDB.members[name]
-
-        if member then
-
-            local r, g, b =
-                GBM.Utils.GetClassColor(
-                    member.class
-                )
-
-            color = {
-                r,
-                g,
-                b,
-            }
-
-        end
-
-        local coloredName =
-            string.format(
-                "|cff%02x%02x%02x%s|r",
-                color[1] * 255,
-                color[2] * 255,
-                color[3] * 255,
-                plainName or name
-            )
-
-        table.insert(
-            parts,
-            coloredName
-            .. " ("
-            .. amount
-            .. ")"
-        )
-
-    end
-
-    row.BankChars:SetText(
-        table.concat(
-            parts,
-            ", "
-        )
-    )
-
-end
-
-function BankRows.Create()
-
-    local row =
-        CreateRow(
-            Bank.Content
-        )
-
-    BankRows.SetLayout(
-        row
-    )
-
-    return row
-
-end
-
-function BankRows.SetLayout(
+local function CloseRow(
     row
 )
 
@@ -377,13 +29,174 @@ function BankRows.SetLayout(
         return
     end
 
-    if Bank.Layout then
+    row.RequestOpen =
+        false
 
-        Bank.Layout.UpdateRow(
+    local extendedRow =
+        GetExtendedRow(
+            row
+        )
+
+    if extendedRow then
+
+        UI.BankExtendedRow.Hide(
+            extendedRow
+        )
+
+    end
+
+end
+
+local function OpenRow(
+    row
+)
+
+    if not row then
+        return
+    end
+
+    if Bank.ExpandedRow
+        and Bank.ExpandedRow ~= row then
+
+        CloseRow(
+            Bank.ExpandedRow
+        )
+
+    end
+
+    Bank.ExpandedRow =
+        row
+
+    row.RequestOpen =
+        true
+
+    local extendedRow =
+        GetExtendedRow(
+            row
+        )
+
+    if not extendedRow then
+        return
+    end
+
+    UI.BankExtendedRow.Update(
+        extendedRow,
+        row.ItemID,
+        row.ItemName
+    )
+
+    UI.BankExtendedRow.Show(
+        extendedRow
+    )
+
+end
+
+local function ToggleRow(
+    row
+)
+
+    if not row then
+        return
+    end
+
+    if row.RequestOpen then
+
+        CloseRow(
+            row
+        )
+
+        if Bank.ExpandedRow == row then
+
+            Bank.ExpandedRow =
+                nil
+
+        end
+
+    else
+
+        OpenRow(
             row
         )
 
     end
+
+    Bank.Refresh()
+
+end
+
+local function CreateRows(
+    parent
+)
+
+    local normalRow =
+        UI.BankNormalRow.Create(
+            parent
+        )
+
+    local extendedRow =
+        UI.BankExtendedRow.Create(
+            parent
+        )
+
+    normalRow.ExtendedRow =
+        extendedRow
+
+    UI.BankNormalRow.SetRequestHandler(
+        normalRow,
+        ToggleRow
+    )
+
+    UI.BankExtendedRow.SetRequestCreatedHandler(
+        extendedRow,
+        function()
+
+            CloseRow(
+                normalRow
+            )
+
+            if Bank.ExpandedRow
+                == normalRow then
+
+                Bank.ExpandedRow =
+                    nil
+
+            end
+
+            Bank.Refresh()
+
+        end
+    )
+
+    UI.BankExtendedRow.SetCancelHandler(
+        extendedRow,
+        function()
+
+            CloseRow(
+                normalRow
+            )
+
+            if Bank.ExpandedRow
+                == normalRow then
+
+                Bank.ExpandedRow =
+                    nil
+
+            end
+
+            Bank.Refresh()
+
+        end
+    )
+
+    return normalRow
+
+end
+
+function BankRows.Create()
+
+    return CreateRows(
+        Bank.Content
+    )
 
 end
 
@@ -397,95 +210,135 @@ function BankRows.Update(
         return
     end
 
-    row.ItemID =
-        itemID
+    UI.BankNormalRow.Update(
+        row,
+        itemID,
+        overview
+    )
 
-    local itemName,
-        link,
-        quality,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _,
-        texture =
-        GetItemInfo(
-            itemID
+    local extendedRow =
+        GetExtendedRow(
+            row
         )
 
-    row.ItemLink =
-        link
+    if extendedRow
+        and row.RequestOpen then
 
-    row.Icon:SetTexture(
-        texture
-    )
+        UI.BankExtendedRow.Update(
+            extendedRow,
+            itemID,
+            row.ItemName
+        )
 
-    row.Item:SetText(
-        itemName
-        or ("Item " .. itemID)
-    )
-
-    if quality then
-
-        local color =
-            ITEM_QUALITY_COLORS[
-                quality
-            ]
-
-        if color then
-
-            row.Item:SetTextColor(
-                color.r,
-                color.g,
-                color.b
-            )
-
-        else
-
-            row.Item:SetTextColor(
-                1,
-                1,
-                1
-            )
-
-        end
-
-    else
-
-        row.Item:SetTextColor(
-            1,
-            1,
-            1
+        UI.BankExtendedRow.Show(
+            extendedRow
         )
 
     end
 
-    row.Total:SetText(
-        overview.total
-        or 0
+end
+
+function BankRows.SetPosition(
+    row,
+    offset
+)
+
+    if not row then
+        return
+    end
+
+    row:ClearAllPoints()
+
+    row:SetPoint(
+        "TOPLEFT",
+        Bank.Content,
+        "TOPLEFT",
+        0,
+        -offset
     )
 
-    SetBankCharText(
-        row,
-        overview
+    row:SetPoint(
+        "TOPRIGHT",
+        Bank.Content,
+        "TOPRIGHT",
+        0,
+        -offset
     )
 
-    row.Reserved:SetText(
-        overview.reserved
-        or 0
+    local extendedRow =
+        GetExtendedRow(
+            row
+        )
+
+    if not extendedRow then
+        return
+    end
+
+    extendedRow:ClearAllPoints()
+
+    extendedRow:SetPoint(
+        "TOPLEFT",
+        Bank.Content,
+        "TOPLEFT",
+        0,
+        -(offset + ROW_HEIGHT)
     )
 
-    row.Available:SetText(
-        overview.available
-        or 0
+    extendedRow:SetPoint(
+        "TOPRIGHT",
+        Bank.Content,
+        "TOPRIGHT",
+        0,
+        -(offset + ROW_HEIGHT)
     )
 
-    SetRowFont(
-        row
-    )
+end
 
-    row:Show()
+function BankRows.GetHeight(
+    row
+)
+
+    if not row then
+        return ROW_HEIGHT
+    end
+
+    local height =
+        ROW_HEIGHT
+
+    if row.RequestOpen then
+
+        height =
+            height
+            + UI.BankExtendedRow.GetHeight()
+
+    end
+
+    return height
+
+end
+
+function BankRows.Hide(
+    row
+)
+
+    if not row then
+        return
+    end
+
+    row:Hide()
+
+    local extendedRow =
+        GetExtendedRow(
+            row
+        )
+
+    if extendedRow then
+
+        UI.BankExtendedRow.Hide(
+            extendedRow
+        )
+
+    end
 
 end
 

@@ -32,6 +32,7 @@
         "Add",
         "GuildBankFrame",
         "STANDARD_TEXT_FONT",
-        "ITEM_QUALITY_COLORS"
+        "ITEM_QUALITY_COLORS",
+        "SlashCmdList"
     ]
 }
