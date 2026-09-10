@@ -3,10 +3,15 @@
 ## Notes: Guild bank management, request, tracking and statistics.
 ## Author: Simon Zwicker
 ## Version: 0.1.0
-## SavedVariables: GuildBankManagerDB
+## SavedVariables: GuildBankManager_GuildDB, GuildBankManager_BankDB
 
-Core.lua
-Database.lua
-Guild.lua
-Bank.lua
-UI.lua
+Core/Init.lua
+Core/Utils.lua
+Core/WoWAPI.lua
+
+Database/GuildDB.lua
+Database/BankDB.lua
+
+Guild/Guild.lua
+
+Core/Events.lua
