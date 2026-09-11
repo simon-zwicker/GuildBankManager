@@ -326,6 +326,18 @@ local ENGLISH = {
 
     REQUESTS_UNKNOWN_ITEM = "Item %d",
 
+    REMOVE =
+        "Remove",
+
+    REMOVE_BANK_CHAR_CONFIRM =
+        "Are you sure you want to remove %s as a bank character?\n\nAll stored bank data for this character will also be removed.",
+
+    BANK_CHAR_REMOVED =
+        "Bank character removed:",
+
+    BANK_CHAR_REMOVE_BLOCKED =
+        "Bank character cannot be removed while an active request is assigned to this character.",
+
 }
 
 local function ApplyLocale(

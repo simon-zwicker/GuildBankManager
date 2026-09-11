@@ -41,6 +41,7 @@ UI\Requests\RequestRow.lua
 UI\Requests\Requests.lua
 UI\Usage.lua
 
+UI\Settings\BankChars.lua
 UI\Settings\Permissions.lua
 UI\Settings\Settings.lua
 UI\Settings\AddChar.lua

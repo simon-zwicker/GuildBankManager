@@ -576,6 +576,13 @@ local function CreateButtons(
 
                 RefreshList()
 
+                if GBM.UI
+                    and GBM.UI.Settings then
+
+                    GBM.UI.Settings.Refresh()
+
+                end
+
             end
 
         end

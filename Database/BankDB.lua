@@ -176,6 +176,37 @@ function BankDB.SetBankChar(
 
 end
 
+function BankDB.RemoveBankChar(
+    fullName
+)
+
+    local db =
+        BankDB.Get()
+
+    if not db then
+        return false
+    end
+
+    if not fullName then
+        return false
+    end
+
+    db.bankChars[
+        fullName
+    ] = nil
+
+    if db.sync
+        and db.sync.bankChar
+        == fullName then
+
+        db.sync.bankChar = nil
+
+    end
+
+    return true
+
+end
+
 function BankDB.GetBankCharItemCount(
     fullName,
     itemID
