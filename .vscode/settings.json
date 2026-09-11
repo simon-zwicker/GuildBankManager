@@ -35,6 +35,9 @@
         "ITEM_QUALITY_COLORS",
         "SlashCmdList",
         "UIDropDownMenu_DisableDropDown",
-        "UIDropDownMenu_EnableDropDown"
+        "UIDropDownMenu_EnableDropDown",
+        "ToggleDropDownMenu",
+        "YES",
+        "NO"
     ]
 }

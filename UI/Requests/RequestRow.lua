@@ -68,10 +68,12 @@ local function GetItemData(
         )
 
     return {
+
         name = itemName,
         link = itemLink,
         quality = itemQuality,
         texture = itemTexture,
+
     }
 
 end
@@ -114,6 +116,40 @@ local function GetCurrentBankChar()
 
 end
 
+local function IsCurrentBankChar()
+
+    return GBM.Permissions
+        and GBM.Permissions.IsBankChar
+        and GBM.Permissions.IsBankChar()
+
+end
+
+local function CanAssignRequests()
+
+    return GBM.Permissions
+        and GBM.Permissions.CanAssignRequests
+        and GBM.Permissions.CanAssignRequests()
+
+end
+
+local function GetAcceptableBankChars(
+    request
+)
+
+    if not request
+        or not GBM.Requests
+        or not GBM.Requests.GetAcceptableBankChars then
+
+        return {}
+
+    end
+
+    return GBM.Requests.GetAcceptableBankChars(
+        request.id
+    )
+
+end
+
 local function CanAccept(
     request
 )
@@ -122,41 +158,145 @@ local function CanAccept(
         return false
     end
 
-    local isBankChar =
-        GBM.Permissions
-        and GBM.Permissions.IsBankChar
-        and GBM.Permissions.IsBankChar()
+    if IsCurrentBankChar() then
 
-    local canAssign =
-        GBM.Permissions
-        and GBM.Permissions.CanAssignRequests
-        and GBM.Permissions.CanAssignRequests()
+        local bankChar =
+            GetCurrentBankChar()
 
-    if not isBankChar
-        and not canAssign then
+        if not bankChar then
+            return false
+        end
 
-        return false
+        if not GBM.BankDB
+            or not GBM.BankDB.CanFulfill then
 
-    end
+            return false
 
-    local bankChar =
-        GetCurrentBankChar()
+        end
 
-    if not bankChar then
-        return false
-    end
-
-    if not GBM.BankDB
-        or not GBM.BankDB.CanFulfill then
-
-        return false
+        return GBM.BankDB.CanFulfill(
+            bankChar,
+            request.itemID,
+            request.amount
+        )
 
     end
 
-    return GBM.BankDB.CanFulfill(
-        bankChar,
-        request.itemID,
-        request.amount
+    if not CanAssignRequests() then
+        return false
+    end
+
+    local bankChars =
+        GetAcceptableBankChars(
+            request
+        )
+
+    return #bankChars > 0
+
+end
+
+local function AcceptRequest(
+    request,
+    bankChar
+)
+
+    if not request
+        or not bankChar then
+
+        return
+
+    end
+
+    if not GBM.Requests
+        or not GBM.Requests.Accept then
+
+        return
+
+    end
+
+    local success =
+        GBM.Requests.Accept(
+            request.id,
+            bankChar
+        )
+
+    if success then
+
+        RequestsUI.Refresh()
+
+    end
+
+end
+
+local function ShowBankCharMenu(
+    button,
+    request
+)
+
+    local bankChars =
+        GetAcceptableBankChars(
+            request
+        )
+
+    if #bankChars == 0 then
+        return
+    end
+
+    local menuName =
+        "GBMRequestBankCharDropdown"
+
+    local menu =
+        CreateFrame(
+            "Frame",
+            menuName,
+            UIParent,
+            "UIDropDownMenuTemplate"
+        )
+
+    UIDropDownMenu_Initialize(
+        menu,
+        function(
+            self,
+            level
+        )
+
+            for _, bankChar in ipairs(
+                bankChars
+            ) do
+
+                local info =
+                    UIDropDownMenu_CreateInfo()
+
+                info.text =
+                    bankChar
+
+                info.func =
+                    function()
+
+                        AcceptRequest(
+                            request,
+                            bankChar
+                        )
+
+                    end
+
+                UIDropDownMenu_AddButton(
+                    info,
+                    level
+                )
+
+            end
+
+        end
+    )
+
+    ToggleDropDownMenu(
+        1,
+        nil,
+        menu,
+        button,
+        0,
+        0
     )
 
 end
@@ -178,7 +318,7 @@ local function CanReject()
 
 end
 
-local function CanRemove(
+local function CanCancel(
     request
 )
 
@@ -186,28 +326,74 @@ local function CanRemove(
         return false
     end
 
-    local isBankChar =
-        GBM.Permissions
-        and GBM.Permissions.IsBankChar
-        and GBM.Permissions.IsBankChar()
-
-    if isBankChar then
-        return true
-    end
-
-    local fullName =
+    local currentPlayer =
         GBM.WoW.GetFullPlayerName()
 
-    if request.requestedBy
-        == fullName then
+    return request.requestedBy
+        == currentPlayer
 
-        return true
+end
+
+local function ShowCancelConfirmation(
+    request
+)
+
+    if not request then
+        return
+    end
+
+    local dialogName =
+        "GBM_CONFIRM_CANCEL_REQUEST"
+
+    if not StaticPopupDialogs[
+        dialogName
+    ] then
+
+        StaticPopupDialogs[
+            dialogName
+        ] = {
+
+            text =
+                GBM.L.REQUEST_CANCEL_CONFIRM,
+
+            button1 =
+                YES,
+
+            button2 =
+                NO,
+
+            timeout = 0,
+
+            whileDead = true,
+
+            hideOnEscape = true,
+
+            preferredIndex = 3,
+
+            OnAccept = function()
+
+                local success =
+                    GBM.Requests.Cancel(
+                        request.id
+                    )
+
+                if success then
+
+                    RequestsUI.Refresh()
+
+                end
+
+            end,
+
+        }
 
     end
 
-    return GBM.Permissions
-        and GBM.Permissions.CanManageRequests
-        and GBM.Permissions.CanManageRequests()
+    StaticPopup_Show(
+        dialogName,
+        request.amount or 0,
+        request.itemName or "?"
+    )
 
 end
 
@@ -370,24 +556,32 @@ function RequestsUI.CreateRequestRow(
         "OnClick",
         function()
 
-            local bankChar =
-                GetCurrentBankChar()
+            if IsCurrentBankChar() then
 
-            if not bankChar then
-                return
-            end
+                local bankChar =
+                    GetCurrentBankChar()
 
-            local success =
-                GBM.Requests.Accept(
-                    request.id,
+                if not bankChar then
+                    return
+                end
+
+                AcceptRequest(
+                    request,
                     bankChar
                 )
 
-            if success then
-
-                RequestsUI.Refresh()
+                return
 
             end
+
+            if not CanAssignRequests() then
+                return
+            end
+
+            ShowBankCharMenu(
+                row.acceptButton,
+                request
+            )
 
         end
     )
@@ -415,45 +609,25 @@ function RequestsUI.CreateRequestRow(
         end
     )
 
-    row.removeButton =
+    row.cancelButton =
         CreateButton(
             row,
             "Interface\\Buttons\\UI-GroupLoot-Pass-Down"
         )
 
-    row.removeButton:SetPoint(
+    row.cancelButton:SetPoint(
         "RIGHT",
         -35,
         0
     )
 
-    row.removeButton:SetScript(
+    row.cancelButton:SetScript(
         "OnClick",
         function()
 
-            local success
-
-            if request.requestedBy
-                == GetCurrentBankChar()
-                and not GBM.Permissions.IsBankChar() then
-
-                success =
-                    GBM.Requests.Cancel(
-                        request.id
-                    )
-
-            else
-
-                success =
-                    GBM.Requests.Delete(
-                        request.id
-                    )
-
-            end
-
-            if success then
-                RequestsUI.Refresh()
-            end
+            ShowCancelConfirmation(
+                request
+            )
 
         end
     )
@@ -503,7 +677,7 @@ function RequestsUI.CreateRequestRow(
 
         self.acceptButton:Hide()
         self.rejectButton:Hide()
-        self.removeButton:Hide()
+        self.cancelButton:Hide()
 
         if not open then
             return
@@ -523,11 +697,11 @@ function RequestsUI.CreateRequestRow(
 
         end
 
-        if CanRemove(
+        if CanCancel(
             request
         ) then
 
-            self.removeButton:Show()
+            self.cancelButton:Show()
 
         end
 

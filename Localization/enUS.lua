@@ -315,6 +315,9 @@ local ENGLISH = {
     COMMAND_HELP =
         "/gbm help - Show available commands",
 
+    REQUEST_CANCEL_CONFIRM =
+        "Are you sure you want to cancel this request?\n\n%d x %s",
+
 }
 
 local function ApplyLocale(

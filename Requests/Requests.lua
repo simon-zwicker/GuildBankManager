@@ -147,6 +147,62 @@ local function IsCurrentAcceptedBankChar(
 
 end
 
+local function GetAcceptableBankChars(
+    request
+)
+
+    local bankChars = {}
+
+    if not request then
+        return bankChars
+    end
+
+    local guildDB =
+        GBM.GuildDB.Get()
+
+    if not guildDB
+        or not guildDB.bankChars then
+
+        return bankChars
+
+    end
+
+    for fullName in pairs(
+        guildDB.bankChars
+    ) do
+
+        local available =
+            GBM.BankDB.GetAvailableAmount(
+                fullName,
+                request.itemID
+            )
+
+        if available
+            and available >= request.amount then
+
+            table.insert(
+                bankChars,
+                fullName
+            )
+
+        end
+
+    end
+
+    table.sort(
+        bankChars,
+        function(a, b)
+
+            return string.lower(a)
+                < string.lower(b)
+
+        end
+    )
+
+    return bankChars
+
+end
+
 function Requests.GetStatusReserved()
 
     return STATUS_RESERVED
@@ -261,6 +317,25 @@ function Requests.GetAvailableAmount(
 
     return GBM.BankDB.GetAvailableTotalAmount(
         itemID
+    )
+
+end
+
+function Requests.GetAcceptableBankChars(
+    requestID
+)
+
+    local request =
+        GetRequest(
+            requestID
+        )
+
+    if not request then
+        return {}
+    end
+
+    return GetAcceptableBankChars(
+        request
     )
 
 end
@@ -402,44 +477,32 @@ function Requests.CanAccept(
 
     end
 
-    if bankChar
-        == request.acceptedBy then
+    if request.acceptedBy then
 
         return false,
             "request_already_accepted"
 
     end
 
+    local isBankChar =
+        IsCurrentBankChar()
+
     local canAssign =
         GBM.Permissions
         and GBM.Permissions.CanAssignRequests
         and GBM.Permissions.CanAssignRequests()
 
-    local isBankChar =
-        GBM.Permissions
-        and GBM.Permissions.IsBankChar
-        and GBM.Permissions.IsBankChar()
+    if isBankChar then
 
-    if not canAssign
-        and not isBankChar then
-
-        return false,
-            "permission_denied"
-
-    end
-
-    if not isBankChar
-        and bankChar
+        if bankChar
             ~= GetPlayerFullName() then
 
-        return false,
-            "permission_denied"
+            return false,
+                "permission_denied"
 
-    end
+        end
 
-    if isBankChar
-        and bankChar
-            ~= GetPlayerFullName() then
+    elseif not canAssign then
 
         return false,
             "permission_denied"
@@ -452,7 +515,8 @@ function Requests.CanAccept(
             request.itemID
         )
 
-    if available < request.amount then
+    if not available
+        or available < request.amount then
 
         return false,
             "insufficient_stock"
@@ -823,88 +887,5 @@ function Requests.Reopen(
     request.acceptedAt = nil
 
     return request
-
-end
-
-function Requests.CanDelete(
-    requestID
-)
-
-    local request =
-        GetRequest(
-            requestID
-        )
-
-    if not request then
-
-        return false,
-            "request_not_found"
-
-    end
-
-    if request.status
-        == STATUS_FULFILLED then
-
-        return false,
-            "fulfilled_request_cannot_be_deleted"
-
-    end
-
-    if IsCurrentBankChar() then
-        return true
-    end
-
-    if request.requestedBy
-        == GetPlayerFullName() then
-
-        return true
-
-    end
-
-    if GBM.Permissions
-        and GBM.Permissions.CanManageRequests
-        and GBM.Permissions.CanManageRequests() then
-
-        return true
-
-    end
-
-    return false,
-        "permission_denied"
-
-end
-
-function Requests.Delete(
-    requestID
-)
-
-    local canDelete,
-        reason =
-        Requests.CanDelete(
-            requestID
-        )
-
-    if not canDelete then
-
-        return false,
-            reason
-
-    end
-
-    local db =
-        GBM.BankDB.Get()
-
-    if not db then
-
-        return false,
-            "database_not_initialized"
-
-    end
-
-    db.requests[
-        requestID
-    ] = nil
-
-    return true
 
 end
