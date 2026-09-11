@@ -478,19 +478,13 @@ function RequestsUI.Refresh()
             RequestsUI.openRows
         )
 
-    local progressCount = 0
-
-    if canViewProgress then
-
-        progressCount =
-            CreateRows(
-                RequestsUI.progressContainer,
-                progressRequests,
-                RequestsUI.CreateInProgressRow,
-                RequestsUI.progressRows
-            )
-
-    end
+    local progressCount =
+        CreateRows(
+            RequestsUI.progressContainer,
+            progressRequests,
+            RequestsUI.CreateInProgressRow,
+            RequestsUI.progressRows
+        )
 
     if openCount == 0 then
 

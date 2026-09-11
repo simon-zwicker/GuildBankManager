@@ -103,19 +103,6 @@ local function CanReopen(
 
 end
 
-local function CanDelete()
-
-    return GBM.Permissions
-        and (
-            GBM.Permissions.IsBankChar
-            and GBM.Permissions.IsBankChar()
-        or
-            GBM.Permissions.CanManageRequests
-            and GBM.Permissions.CanManageRequests()
-        )
-
-end
-
 function RequestsUI.CreateInProgressRow(
     parent,
     request
@@ -344,38 +331,6 @@ function RequestsUI.CreateInProgressRow(
         end
     )
 
-    -- Delete
-
-    row.deleteButton =
-        CreateButton(
-            row,
-            "Interface\\Buttons\\UI-GroupLoot-Pass-Down"
-        )
-
-    row.deleteButton:SetPoint(
-        "RIGHT",
-        -35,
-        0
-    )
-
-    row.deleteButton:SetScript(
-        "OnClick",
-        function()
-
-            local success =
-                GBM.Requests.Delete(
-                    request.id
-                )
-
-            if success then
-
-                RequestsUI.Refresh()
-
-            end
-
-        end
-    )
-
     function row:Refresh()
 
         local currentItemInfo =
@@ -414,7 +369,6 @@ function RequestsUI.CreateInProgressRow(
 
         self.fulfillButton:Hide()
         self.reopenButton:Hide()
-        self.deleteButton:Hide()
 
         if request.status
             ~= "in_progress" then
@@ -425,7 +379,10 @@ function RequestsUI.CreateInProgressRow(
 
         if IsOwner(
             request
-        ) then
+        )
+        and GBM.Permissions
+        and GBM.Permissions.IsBankChar
+        and GBM.Permissions.IsBankChar() then
 
             self.fulfillButton:Show()
 
@@ -436,12 +393,6 @@ function RequestsUI.CreateInProgressRow(
         ) then
 
             self.reopenButton:Show()
-
-        end
-
-        if CanDelete() then
-
-            self.deleteButton:Show()
 
         end
 

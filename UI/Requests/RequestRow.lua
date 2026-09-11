@@ -712,3 +712,200 @@ function RequestsUI.CreateRequestRow(
     return row
 
 end
+
+function RequestsUI.CreateInProgressRow(
+    parent,
+    request
+)
+
+    local row =
+        CreateFrame(
+            "Frame",
+            nil,
+            parent,
+            "BackdropTemplate"
+        )
+
+    row:SetHeight(
+        ROW_HEIGHT
+    )
+
+    row.request =
+        request
+
+    row:SetBackdrop({
+        bgFile =
+            "Interface\\Tooltips\\UI-Tooltip-Background",
+
+        edgeFile =
+            "Interface\\Tooltips\\UI-Tooltip-Border",
+
+        edgeSize = 1,
+    })
+
+    row:SetBackdropColor(
+        0,
+        0,
+        0,
+        0.20
+    )
+
+    row.icon =
+        row:CreateTexture(
+            nil,
+            "ARTWORK"
+        )
+
+    row.icon:SetSize(
+        ICON_SIZE,
+        ICON_SIZE
+    )
+
+    row.icon:SetPoint(
+        "LEFT",
+        5,
+        0
+    )
+
+    local itemInfo =
+        GetItemData(
+            request.itemID
+        )
+
+    row.icon:SetTexture(
+        itemInfo
+        and itemInfo.texture
+        or "Interface\\Icons\\INV_Misc_QuestionMark"
+    )
+
+    row.itemName =
+        row:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormal"
+        )
+
+    row.itemName:SetPoint(
+        "LEFT",
+        row.icon,
+        "RIGHT",
+        8,
+        0
+    )
+
+    row.itemName:SetWidth(
+        220
+    )
+
+    row.itemName:SetJustifyH(
+        "LEFT"
+    )
+
+    row.itemName:SetText(
+        itemInfo
+        and itemInfo.name
+        or (
+            "Item "
+            .. tostring(
+                request.itemID
+            )
+        )
+    )
+
+    row.amount =
+        row:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormal"
+        )
+
+    row.amount:SetWidth(
+        70
+    )
+
+    row.amount:SetPoint(
+        "LEFT",
+        row.itemName,
+        "RIGHT",
+        10,
+        0
+    )
+
+    row.amount:SetJustifyH(
+        "CENTER"
+    )
+
+    row.amount:SetText(
+        tostring(
+            request.amount
+            or 0
+        )
+    )
+
+    row.acceptedBy =
+        row:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormal"
+        )
+
+    row.acceptedBy:SetPoint(
+        "LEFT",
+        row.amount,
+        "RIGHT",
+        15,
+        0
+    )
+
+    row.acceptedBy:SetJustifyH(
+        "LEFT"
+    )
+
+    row.acceptedBy:SetText(
+        request.acceptedBy
+        or "-"
+    )
+
+    function row:Refresh()
+
+        local currentItemInfo =
+            GetItemData(
+                request.itemID
+            )
+
+        self.icon:SetTexture(
+            currentItemInfo
+            and currentItemInfo.texture
+            or "Interface\\Icons\\INV_Misc_QuestionMark"
+        )
+
+        self.itemName:SetText(
+            currentItemInfo
+            and currentItemInfo.name
+            or (
+                "Item "
+                .. tostring(
+                    request.itemID
+                )
+            )
+        )
+
+        self.amount:SetText(
+            tostring(
+                request.amount
+                or 0
+            )
+        )
+
+        self.acceptedBy:SetText(
+            request.acceptedBy
+            or "-"
+        )
+
+    end
+
+    row:Refresh()
+
+    return row
+
+end
