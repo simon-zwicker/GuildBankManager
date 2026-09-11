@@ -4,6 +4,8 @@ GBM.BankScanner = {}
 
 local BankScanner = GBM.BankScanner
 
+local L = GBM.L
+
 local MAX_BANK_BAGS = 7
 local MAX_INVENTORY_BAGS = 4
 
@@ -24,6 +26,7 @@ local function GetCurrentBankChar()
     end
 
     return fullName
+
 end
 
 local function AddItem(
@@ -43,6 +46,7 @@ local function AddItem(
     items[itemID] =
         (items[itemID] or 0)
         + quantity
+
 end
 
 local function ScanContainer(
@@ -93,10 +97,13 @@ local function ScanContainer(
 
             statistics.itemCount =
                 statistics.itemCount + quantity
+
         end
+
     end
 
     return true
+
 end
 
 local function ScanBank()
@@ -112,24 +119,11 @@ local function ScanBank()
         bankBags = 0,
     }
 
-    -- Hauptbank
-
     ScanContainer(
         BANK_CONTAINER,
         items,
         statistics
     )
-
-    -- Banktaschen
-    --
-    -- Classic Era:
-    -- 5  = Banktasche 1
-    -- 6  = Banktasche 2
-    -- ...
-    -- 11 = Banktasche 7
-    --
-    -- Nicht vorhandene Taschen liefern
-    -- keine Slots und werden ignoriert.
 
     for bagID = 5, 4 + MAX_BANK_BAGS do
 
@@ -144,10 +138,13 @@ local function ScanBank()
 
             statistics.bankBags =
                 statistics.bankBags + 1
+
         end
+
     end
 
     return items, statistics
+
 end
 
 local function ScanInventory()
@@ -163,23 +160,11 @@ local function ScanInventory()
         bags = 0,
     }
 
-    -- Rucksack
-
     ScanContainer(
         0,
         items,
         statistics
     )
-
-    -- Zusätzliche Inventartaschen
-    --
-    -- 1 = Tasche 1
-    -- 2 = Tasche 2
-    -- 3 = Tasche 3
-    -- 4 = Tasche 4
-    --
-    -- Nicht belegte Taschenplätze werden
-    -- automatisch ignoriert.
 
     for bagID = 1, MAX_INVENTORY_BAGS do
 
@@ -194,10 +179,13 @@ local function ScanInventory()
 
             statistics.bags =
                 statistics.bags + 1
+
         end
+
     end
 
     return items, statistics
+
 end
 
 local function MergeItems(
@@ -216,6 +204,7 @@ local function MergeItems(
             itemID,
             amount
         )
+
     end
 
     for itemID, amount in pairs(
@@ -227,9 +216,11 @@ local function MergeItems(
             itemID,
             amount
         )
+
     end
 
     return items
+
 end
 
 local function CountItems(
@@ -248,9 +239,11 @@ local function CountItems(
 
         itemCount =
             itemCount + amount
+
     end
 
     return itemTypes, itemCount
+
 end
 
 local function SaveBankCharData(
@@ -285,11 +278,13 @@ local function SaveBankCharData(
     }
 
     return true
+
 end
 
 function BankScanner.IsAvailable()
 
     return GetCurrentBankChar() ~= nil
+
 end
 
 function BankScanner.Sync()
@@ -300,25 +295,30 @@ function BankScanner.Sync()
     if not fullName then
 
         print(
-            "|cFFFFFF00GBM|r Kein registrierter Bankchar."
+            "|cFFFFFF00GBM|r "
+            .. L.NO_REGISTERED_BANK_CHAR
         )
 
         return false
+
     end
 
     if BankScanner.IsSyncing then
 
         print(
-            "|cFFFFFF00GBM|r Synchronisierung läuft bereits."
+            "|cFFFFFF00GBM|r "
+            .. L.SYNC_RUNNING
         )
 
         return false
+
     end
 
     BankScanner.IsSyncing = true
 
     print(
-        "|cFF00FF00GBM|r Synchronisierung gestartet..."
+        "|cFF00FF00GBM|r "
+        .. L.SYNC_STARTED
     )
 
     local bankItems,
@@ -352,10 +352,12 @@ function BankScanner.Sync()
     if not success then
 
         print(
-            "|cFFFF0000GBM|r Synchronisierung fehlgeschlagen."
+            "|cFFFF0000GBM|r "
+            .. L.SYNC_FAILED
         )
 
         return false
+
     end
 
     local db =
@@ -378,16 +380,6 @@ function BankScanner.Sync()
 
     end
 
-    -- Synchronisiert den vollständig aktualisierten
-    -- lokalen Datenstand mit den anderen GBM-Clients.
-    if GBM.Sync
-        and GBM.Sync.Comm
-        and GBM.Sync.Comm.MarkChanged then
-
-        GBM.Sync.Comm.MarkChanged()
-
-    end
-
     local bankItemTypes,
         bankItemCount =
         CountItems(
@@ -407,78 +399,136 @@ function BankScanner.Sync()
         )
 
     print(
-        "|cFF00FF00GBM|r Bankchar:",
-        fullName
-    )
-
-    print(
-        "|cFF00FF00GBM|r Banktaschen:",
-        bankStatistics.bankBags,
-        "von",
-        MAX_BANK_BAGS
-    )
-
-    print(
-        "|cFF00FF00GBM|r Bankslots gesamt:",
-        bankStatistics.slots
-    )
-
-    print(
-        "|cFF00FF00GBM|r Belegte Bankslots:",
-        bankStatistics.filledSlots
-    )
-
-    print(
-        "|cFF00FF00GBM|r Bank-Items:",
-        bankItemCount
-    )
-
-    print(
-        "|cFF00FF00GBM|r Bank-Itemtypen:",
-        bankItemTypes
-    )
-
-    print(
-        "|cFF00FF00GBM|r Inventartaschen:",
-        inventoryStatistics.bags,
-        "von",
-        MAX_INVENTORY_BAGS
-    )
-
-    print(
-        "|cFF00FF00GBM|r Inventarslots:",
-        inventoryStatistics.slots
-    )
-
-    print(
-        "|cFF00FF00GBM|r Belegte Inventarslots:",
-        inventoryStatistics.filledSlots
-    )
-
-    print(
-        "|cFF00FF00GBM|r Inventar-Items:",
-        inventoryItemCount
-    )
-
-    print(
-        "|cFF00FF00GBM|r Gesamt-Items:",
-        totalItemCount
-    )
-
-    print(
-        "|cFF00FF00GBM|r Gesamt-Itemtypen:",
-        totalItemTypes
-    )
-
-    print(
-        "|cFF00FF00GBM|r Gold:",
-        GetMoneyString(
-            gold,
-            true
+        "|cFF00FF00GBM|r "
+        .. string.format(
+            L.BANK_CHAR_STATUS,
+            fullName
         )
     )
 
+    print(
+        "|cFF00FF00GBM|r "
+        .. string.format(
+            L.BANK_BAGS_STATUS,
+            bankStatistics.bankBags,
+            MAX_BANK_BAGS
+        )
+    )
+
+    print(
+        "|cFF00FF00GBM|r "
+        .. string.format(
+            L.BANK_SLOTS_STATUS,
+            bankStatistics.slots
+        )
+    )
+
+    print(
+        "|cFF00FF00GBM|r "
+        .. string.format(
+            L.FILLED_BANK_SLOTS_STATUS,
+            bankStatistics.filledSlots
+        )
+    )
+
+    print(
+        "|cFF00FF00GBM|r "
+        .. string.format(
+            L.BANK_ITEMS_STATUS,
+            bankItemCount
+        )
+    )
+
+    print(
+        "|cFF00FF00GBM|r "
+        .. string.format(
+            L.BANK_ITEM_TYPES_STATUS,
+            bankItemTypes
+        )
+    )
+
+    print(
+        "|cFF00FF00GBM|r "
+        .. string.format(
+            L.INVENTORY_BAGS_STATUS,
+            inventoryStatistics.bags,
+            MAX_INVENTORY_BAGS
+        )
+    )
+
+    print(
+        "|cFF00FF00GBM|r "
+        .. string.format(
+            L.INVENTORY_SLOTS_STATUS,
+            inventoryStatistics.slots
+        )
+    )
+
+    print(
+        "|cFF00FF00GBM|r "
+        .. string.format(
+            L.FILLED_INVENTORY_SLOTS_STATUS,
+            inventoryStatistics.filledSlots
+        )
+    )
+
+    print(
+        "|cFF00FF00GBM|r "
+        .. string.format(
+            L.INVENTORY_ITEMS_STATUS,
+            inventoryItemCount
+        )
+    )
+
+    print(
+        "|cFF00FF00GBM|r "
+        .. string.format(
+            L.TOTAL_ITEMS_STATUS,
+            totalItemCount
+        )
+    )
+
+    print(
+        "|cFF00FF00GBM|r "
+        .. string.format(
+            L.TOTAL_ITEM_TYPES_STATUS,
+            totalItemTypes
+        )
+    )
+
+    print(
+        "|cFF00FF00GBM|r "
+        .. string.format(
+            L.GOLD_STATUS,
+            GetMoneyString(
+                gold,
+                true
+            )
+        )
+    )
+
+    print(
+        "|cFF00FF00GBM|r "
+        .. string.format(
+            L.SYNC_FINISHED,
+            totalItemCount,
+            GetMoneyString(
+                gold,
+                true
+            )
+        )
+    )
+
+    if GBM.Sync
+        and GBM.Sync.Comm
+        and GBM.Sync.Comm.MarkChanged then
+
+        GBM.Sync.Comm.MarkChanged()
+
+    end
+
     return true
+
 end
 
 function BankScanner.RebuildItemIndex()
@@ -507,8 +557,11 @@ function BankScanner.RebuildItemIndex()
                 items[itemID] = true
 
             end
+
         end
+
     end
 
     db.items = items
+
 end

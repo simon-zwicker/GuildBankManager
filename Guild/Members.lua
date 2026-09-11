@@ -11,8 +11,6 @@ function Guild.UpdateMembers()
         return nil
     end
 
-    GBM.WoW.RequestGuildRoster()
-
     local members = {}
 
     local memberCount =
@@ -25,7 +23,8 @@ function Guild.UpdateMembers()
                 index
             )
 
-        if member then
+        if member
+            and member.name then
 
             members[member.name] =
                 member

@@ -11,6 +11,18 @@ local frame = CreateFrame(
 )
 
 local syncPending = false
+local guildMembersLoaded = false
+
+local function PrintStatus(
+    message
+)
+
+    print(
+        "|cFF00FF00GBM|r "
+        .. message
+    )
+
+end
 
 local function OnAddonLoaded(
     frame,
@@ -30,24 +42,26 @@ local function OnAddonLoaded(
     GBM.BankDB.Initialize()
     GBM.Commands.Initialize()
 
-    GBM.Permissions.Initialize()
+    if GBM.Permissions
+        and GBM.Permissions.Initialize then
+
+        GBM.Permissions.Initialize()
+
+    end
 
     GBM.Guild.Initialize()
 
-    GBM.Sync.Comm.Initialize()
+    if GBM.Sync
+        and GBM.Sync.Comm
+        and GBM.Sync.Comm.Initialize then
+
+        GBM.Sync.Comm.Initialize()
+
+    end
 
     GBM.WoW.RequestGuildRoster()
 
     GBM.UI.Initialize()
-
-    C_Timer.After(
-        2,
-        function()
-
-            GBM.Sync.Comm.Hello()
-
-        end
-    )
 
     frame:UnregisterEvent(
         "ADDON_LOADED"
@@ -58,16 +72,21 @@ local function OnAddonLoaded(
     )
 
     frame:RegisterEvent(
-        "CHAT_MSG_ADDON"
-    )
-
-    frame:RegisterEvent(
         "BANKFRAME_OPENED"
     )
 
     frame:RegisterEvent(
         "BANKFRAME_CLOSED"
     )
+
+    if GBM.Sync
+        and GBM.Sync.Comm then
+
+        frame:RegisterEvent(
+            "CHAT_MSG_ADDON"
+        )
+
+    end
 
     print(
         "|cFF00FF00GBM|r "
@@ -81,19 +100,54 @@ end
 
 local function OnGuildRosterUpdate()
 
-    GBM.Guild.UpdateMembers()
+    local members =
+        GBM.Guild.UpdateMembers()
 
-end
+    if not members then
+        return
+    end
 
-local function OnAddonMessage(
-    event,
-    ...
-)
+    if guildMembersLoaded then
+        return
+    end
 
-    GBM.Sync.Comm.OnEvent(
-        event,
-        ...
+    local count = 0
+
+    for _ in pairs(
+        members
+    ) do
+
+        count = count + 1
+
+    end
+
+    if count <= 0 then
+        return
+    end
+
+    guildMembersLoaded = true
+
+    PrintStatus(
+        string.format(
+            L.GUILD_MEMBERS_LOADED,
+            count
+        )
     )
+
+    if GBM.Sync
+        and GBM.Sync.Comm
+        and GBM.Sync.Comm.Hello then
+
+        C_Timer.After(
+            0.5,
+            function()
+
+                GBM.Sync.Comm.Hello()
+
+            end
+        )
+
+    end
 
 end
 
@@ -128,15 +182,52 @@ local function OnBankFrameClosed()
 
 end
 
+local function OnChatMessageAddon(
+    prefix,
+    message,
+    channel,
+    sender,
+    target,
+    zoneChannelID,
+    localID,
+    name,
+    instanceID
+)
+
+    if not GBM.Sync
+        or not GBM.Sync.Comm
+        or not GBM.Sync.Comm.OnEvent then
+
+        return
+
+    end
+
+    GBM.Sync.Comm.OnEvent(
+        "CHAT_MSG_ADDON",
+        prefix,
+        message,
+        channel,
+        sender,
+        target,
+        zoneChannelID,
+        localID,
+        name,
+        instanceID
+    )
+
+end
+
 frame:SetScript(
     "OnEvent",
     function(
         frame,
         event,
-        loadedAddonName
+        ...
     )
 
         if event == "ADDON_LOADED" then
+
+            local loadedAddonName = ...
 
             OnAddonLoaded(
                 frame,
@@ -148,13 +239,6 @@ frame:SetScript(
 
             OnGuildRosterUpdate()
 
-        elseif event == "CHAT_MSG_ADDON" then
-
-            OnAddonMessage(
-                event,
-                ...
-            )
-
         elseif event == "BANKFRAME_OPENED" then
 
             OnBankFrameOpened()
@@ -162,6 +246,12 @@ frame:SetScript(
         elseif event == "BANKFRAME_CLOSED" then
 
             OnBankFrameClosed()
+
+        elseif event == "CHAT_MSG_ADDON" then
+
+            OnChatMessageAddon(
+                ...
+            )
 
         end
 
