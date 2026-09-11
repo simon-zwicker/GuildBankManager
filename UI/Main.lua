@@ -11,17 +11,17 @@ local WINDOW_HEIGHT = 700
 
 local TAB_HEIGHT = 38
 local TAB_GAP = 4
-
 local TAB_FONT_SIZE = 14
 
 local function CreateMainFrame()
 
-    local frame = CreateFrame(
-        "Frame",
-        "GBMMainFrame",
-        UIParent,
-        "BasicFrameTemplateWithInset"
-    )
+    local frame =
+        CreateFrame(
+            "Frame",
+            "GBMMainFrame",
+            UIParent,
+            "BasicFrameTemplateWithInset"
+        )
 
     frame:SetSize(
         WINDOW_WIDTH,
@@ -34,6 +34,7 @@ local function CreateMainFrame()
 
     frame:SetMovable(true)
     frame:EnableMouse(true)
+
     frame:RegisterForDrag(
         "LeftButton"
     )
@@ -66,6 +67,7 @@ local function CreateMainFrame()
     frame:Hide()
 
     return frame
+
 end
 
 local function CreateContent(
@@ -99,6 +101,7 @@ local function CreateContent(
         content
 
     return content
+
 end
 
 local function CreateViews()
@@ -106,11 +109,13 @@ local function CreateViews()
     UI.Views = {}
 
     local viewNames = {
+
         "bank",
         "requests",
         "statistics",
         "usage",
         "settings",
+
     }
 
     for _, viewName in ipairs(
@@ -128,10 +133,13 @@ local function CreateViews()
 
         view:Hide()
 
-        UI.Views[viewName] =
+        UI.Views[
+            viewName
+        ] =
             view
 
     end
+
 end
 
 local function CreateTab(
@@ -209,15 +217,11 @@ local function CreateTab(
 
     tab.Active:SetPoint(
         "BOTTOMLEFT",
-        tab,
-        "BOTTOMLEFT",
         0,
         0
     )
 
     tab.Active:SetPoint(
-        "BOTTOMRIGHT",
-        tab,
         "BOTTOMRIGHT",
         0,
         0
@@ -248,6 +252,39 @@ local function CreateTab(
     )
 
     return tab
+
+end
+
+local function CanShowView(
+    viewName
+)
+
+    if viewName == "bank"
+        or viewName == "statistics"
+        or viewName == "usage" then
+
+        return true
+
+    end
+
+    if viewName == "requests" then
+
+        return GBM.Permissions
+            and GBM.Permissions.CanViewRequests
+            and GBM.Permissions.CanViewRequests()
+
+    end
+
+    if viewName == "settings" then
+
+        return GBM.Permissions
+            and GBM.Permissions.CanViewSettings
+            and GBM.Permissions.CanViewSettings()
+
+    end
+
+    return false
+
 end
 
 local function CreateTabs(
@@ -290,61 +327,111 @@ local function CreateTabs(
 
     UI.TabButtons = {}
 
-    local tabData = {
-        {
-            id = "bank",
-            text = L.BANK,
-        },
-        {
-            id = "requests",
-            text = L.REQUESTS,
-        },
-        {
-            id = "statistics",
-            text = L.STATISTICS,
-        },
-        {
-            id = "usage",
-            text = L.USAGE,
-        },
-        {
-            id = "settings",
-            text = L.SETTINGS,
-        },
-    }
+    UI.RefreshTabs =
+        function()
 
-    local tabWidth =
-        WINDOW_WIDTH
-        / #tabData
+            for _, tab in pairs(
+                UI.TabButtons
+            ) do
 
-    for index, data in ipairs(
-        tabData
-    ) do
+                tab:Hide()
 
-        local tab =
-            CreateTab(
-                tabs,
-                data.text,
-                data.id
-            )
+            end
 
-        tab:SetWidth(
-            tabWidth
-        )
+            UI.TabButtons = {}
 
-        tab:SetPoint(
-            "TOPLEFT",
-            tabs,
-            "TOPLEFT",
-            (index - 1) * tabWidth,
-            0
-        )
+            local tabData = {
 
-        UI.TabButtons[
-            data.id
-        ] = tab
+                {
+                    id = "bank",
+                    text = L.BANK,
+                },
 
-    end
+                {
+                    id = "requests",
+                    text = L.REQUESTS,
+                },
+
+                {
+                    id = "statistics",
+                    text = L.STATISTICS,
+                },
+
+                {
+                    id = "usage",
+                    text = L.USAGE,
+                },
+
+                {
+                    id = "settings",
+                    text = L.SETTINGS,
+                },
+
+            }
+
+            local visibleTabs = {}
+
+            for _, data in ipairs(
+                tabData
+            ) do
+
+                if CanShowView(
+                    data.id
+                ) then
+
+                    visibleTabs[
+                        #visibleTabs + 1
+                    ] =
+                        data
+
+                end
+
+            end
+
+            local tabWidth =
+                WINDOW_WIDTH
+                / math.max(
+                    1,
+                    #visibleTabs
+                )
+
+            for index, data in ipairs(
+                visibleTabs
+            ) do
+
+                local tab =
+                    CreateTab(
+                        tabs,
+                        data.text,
+                        data.id
+                    )
+
+                tab:SetWidth(
+                    tabWidth
+                )
+
+                tab:SetPoint(
+                    "TOPLEFT",
+                    tabs,
+                    "TOPLEFT",
+                    (index - 1)
+                    * tabWidth,
+                    0
+                )
+
+                UI.TabButtons[
+                    data.id
+                ] =
+                    tab
+
+                tab:Show()
+
+            end
+
+        end
+
+    UI.RefreshTabs()
+
 end
 
 local function UpdateTabs(
@@ -352,7 +439,7 @@ local function UpdateTabs(
 )
 
     for id, tab in pairs(
-        UI.TabButtons
+        UI.TabButtons or {}
     ) do
 
         if id == activeView then
@@ -368,14 +455,50 @@ local function UpdateTabs(
         )
 
     end
+
+end
+
+local function RefreshView(
+    viewName
+)
+
+    if not UI.Refreshers then
+        return
+    end
+
+    local controller =
+        UI.Refreshers[
+            viewName
+        ]
+
+    if not controller then
+        return
+    end
+
+    if not controller.Refresh then
+        return
+    end
+
+    controller.Refresh()
+
 end
 
 function UI.ShowView(
     viewName
 )
 
+    if not CanShowView(
+        viewName
+    ) then
+
+        return
+
+    end
+
     local view =
-        UI.Views[viewName]
+        UI.Views[
+            viewName
+        ]
 
     if not view then
         return
@@ -398,37 +521,17 @@ function UI.ShowView(
         viewName
     )
 
-end
-
-function UI.Show()
-
-    if not UI.MainFrame then
-        return
-    end
-
-    UI.MainFrame:Show()
-
-    UI.Tabs:Show()
-
-    UI.ShowView(
-        "bank"
+    RefreshView(
+        viewName
     )
 
 end
 
-function UI.Hide()
+function UI.Initialize()
 
-    if not UI.MainFrame then
+    if UI.MainFrame then
         return
     end
-
-    UI.MainFrame:Hide()
-
-    UI.Tabs:Hide()
-
-end
-
-function UI.Initialize()
 
     local frame =
         CreateMainFrame()
@@ -442,16 +545,98 @@ function UI.Initialize()
 
     CreateViews()
 
+    UI.Bank.Initialize()
+
+    if UI.Requests
+        and UI.Requests.Initialize then
+
+        UI.Requests.Initialize(
+            UI.Views.requests
+        )
+
+    end
+
+    if UI.Statistics
+        and UI.Statistics.Initialize then
+
+        UI.Statistics.Initialize(
+            UI.Views.statistics
+        )
+
+    end
+
+    if UI.Usage
+        and UI.Usage.Initialize then
+
+        UI.Usage.Initialize(
+            UI.Views.usage
+        )
+
+    end
+
+    UI.Settings.Initialize()
+
+    UI.Refreshers = {
+
+        bank =
+            UI.Bank,
+
+        requests =
+            UI.Requests,
+
+        statistics =
+            UI.Statistics,
+
+        usage =
+            UI.Usage,
+
+        settings =
+            UI.Settings,
+
+    }
+
     CreateTabs(
         frame
     )
 
-    UI.Tabs:Hide()
+    UI.ShowView(
+        "bank"
+    )
 
-    UI.Bank.Initialize()
-    -- UI.Requests.Initialize()
-    -- UI.Statistics.Initialize()
-    -- UI.Usage.Initialize()
-    UI.Settings.Initialize()
+end
+
+function UI.Toggle()
+
+    if not UI.MainFrame then
+        UI.Initialize()
+    end
+
+    if UI.MainFrame:IsShown() then
+
+        UI.MainFrame:Hide()
+
+    else
+
+        UI.RefreshTabs()
+
+        local activeView =
+            UI.ActiveView
+
+        if not activeView
+            or not CanShowView(
+                activeView
+            ) then
+
+            activeView = "bank"
+
+        end
+
+        UI.MainFrame:Show()
+
+        UI.ShowView(
+            activeView
+        )
+
+    end
 
 end

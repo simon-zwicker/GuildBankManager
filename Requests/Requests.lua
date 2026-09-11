@@ -5,6 +5,7 @@ GBM.Requests = {}
 local Requests = GBM.Requests
 
 local STATUS_RESERVED = "reserved"
+local STATUS_IN_PROGRESS = "in_progress"
 local STATUS_REJECTED = "rejected"
 local STATUS_FULFILLED = "fulfilled"
 local STATUS_CANCELLED = "cancelled"
@@ -37,7 +38,8 @@ local function GenerateRequestID()
         if number
             and number > highestNumber then
 
-            highestNumber = number
+            highestNumber =
+                number
 
         end
 
@@ -88,85 +90,72 @@ local function GetRequest(
     local db =
         GBM.BankDB.Get()
 
-    if not db then
+    if not db
+        or not requestID then
+
         return nil
+
     end
 
-    if not requestID then
-        return nil
-    end
-
-    return db.requests[requestID]
+    return db.requests[
+        requestID
+    ]
 
 end
 
-local function CanAssignRequests()
-
-    if not GBM.Permissions
-        or not GBM.Permissions.CanAssignRequests then
-
-        return false
-
-    end
-
-    return GBM.Permissions.CanAssignRequests()
-
-end
-
-local function IsCurrentBankChar(
-    bankChar
+local function IsRegisteredBankChar(
+    fullName
 )
 
-    if not bankChar then
+    local guildDB =
+        GBM.GuildDB.Get()
+
+    if not guildDB
+        or not fullName then
+
         return false
+
     end
 
-    if not GBM.Permissions
-        or not GBM.Permissions.IsBankChar then
-
-        return false
-
-    end
-
-    if not GBM.Permissions.IsBankChar() then
-        return false
-    end
-
-    return GetPlayerFullName()
-        == bankChar
+    return guildDB.bankChars[
+        fullName
+    ] ~= nil
 
 end
 
-local function CanBankCharAccept(
-    request,
-    bankChar
+local function IsCurrentBankChar()
+
+    return GBM.Permissions
+        and GBM.Permissions.IsBankChar
+        and GBM.Permissions.IsBankChar()
+
+end
+
+local function IsCurrentAcceptedBankChar(
+    request
 )
 
-    if not IsCurrentBankChar(
-        bankChar
-    ) then
+    if not request
+        or not request.acceptedBy then
 
         return false
 
     end
 
-    if not GBM.BankDB.CanFulfill(
-        bankChar,
-        request.itemID,
-        request.amount
-    ) then
-
-        return false
-
-    end
-
-    return true
+    return request.acceptedBy
+        == GetPlayerFullName()
 
 end
 
 function Requests.GetStatusReserved()
 
     return STATUS_RESERVED
+
+end
+
+function Requests.GetStatusInProgress()
+
+    return STATUS_IN_PROGRESS
 
 end
 
@@ -225,7 +214,8 @@ function Requests.GetByStatus(
         Requests.GetAll()
     ) do
 
-        if request.status == status then
+        if request
+            and request.status == status then
 
             table.insert(
                 requests,
@@ -240,8 +230,13 @@ function Requests.GetByStatus(
         requests,
         function(a, b)
 
-            return (a.requestedAt or 0)
-                < (b.requestedAt or 0)
+            return (
+                a.requestedAt
+                or 0
+            ) < (
+                b.requestedAt
+                or 0
+            )
 
         end
     )
@@ -353,9 +348,13 @@ function Requests.Create(
         rejectedBy = nil,
         rejectedAt = nil,
 
+        rejectionReason = nil,
+
     }
 
-    db.requests[requestID] =
+    db.requests[
+        requestID
+    ] =
         request
 
     return request
@@ -379,7 +378,8 @@ function Requests.CanAccept(
 
     end
 
-    if request.status ~= STATUS_RESERVED then
+    if request.status
+        ~= STATUS_RESERVED then
 
         return false,
             "request_not_reserved"
@@ -393,47 +393,73 @@ function Requests.CanAccept(
 
     end
 
-    local guildDB =
-        GBM.GuildDB.Get()
-
-    if not guildDB then
-
-        return false,
-            "guild_database_not_initialized"
-
-    end
-
-    if not guildDB.bankChars[bankChar] then
+    if not IsRegisteredBankChar(
+        bankChar
+    ) then
 
         return false,
             "not_registered_bankchar"
 
     end
 
-    if request.acceptedBy then
+    if bankChar
+        == request.acceptedBy then
 
         return false,
             "request_already_accepted"
 
     end
 
-    if CanAssignRequests() then
+    local canAssign =
+        GBM.Permissions
+        and GBM.Permissions.CanAssignRequests
+        and GBM.Permissions.CanAssignRequests()
 
-        return true
+    local isBankChar =
+        GBM.Permissions
+        and GBM.Permissions.IsBankChar
+        and GBM.Permissions.IsBankChar()
+
+    if not canAssign
+        and not isBankChar then
+
+        return false,
+            "permission_denied"
 
     end
 
-    if CanBankCharAccept(
-        request,
-        bankChar
-    ) then
+    if not isBankChar
+        and bankChar
+            ~= GetPlayerFullName() then
 
-        return true
+        return false,
+            "permission_denied"
 
     end
 
-    return false,
-        "permission_denied"
+    if isBankChar
+        and bankChar
+            ~= GetPlayerFullName() then
+
+        return false,
+            "permission_denied"
+
+    end
+
+    local available =
+        GBM.BankDB.GetAvailableAmount(
+            bankChar,
+            request.itemID
+        )
+
+    if available < request.amount then
+
+        return false,
+            "insufficient_stock"
+
+    end
+
+    return true
 
 end
 
@@ -461,6 +487,9 @@ function Requests.Accept(
             requestID
         )
 
+    request.status =
+        STATUS_IN_PROGRESS
+
     request.acceptedBy =
         bankChar
 
@@ -487,22 +516,24 @@ function Requests.CanReject(
 
     end
 
-    if request.status ~= STATUS_RESERVED then
+    if request.status
+        ~= STATUS_RESERVED then
 
         return false,
             "request_not_reserved"
 
     end
 
-    if not GBM.Permissions
-        or not GBM.Permissions.CanRejectRequests then
+    local isBankChar =
+        IsCurrentBankChar()
 
-        return false,
-            "permission_denied"
+    local canReject =
+        GBM.Permissions
+        and GBM.Permissions.CanRejectRequests
+        and GBM.Permissions.CanRejectRequests()
 
-    end
-
-    if not GBM.Permissions.CanRejectRequests() then
+    if not isBankChar
+        and not canReject then
 
         return false,
             "permission_denied"
@@ -514,7 +545,8 @@ function Requests.CanReject(
 end
 
 function Requests.Reject(
-    requestID
+    requestID,
+    reasonText
 )
 
     local canReject,
@@ -544,6 +576,9 @@ function Requests.Reject(
     request.rejectedAt =
         time()
 
+    request.rejectionReason =
+        reasonText
+
     return request
 
 end
@@ -564,10 +599,19 @@ function Requests.CanCancel(
 
     end
 
-    if request.status ~= STATUS_RESERVED then
+    if request.status
+        ~= STATUS_RESERVED then
 
         return false,
             "request_not_reserved"
+
+    end
+
+    if request.requestedBy
+        ~= GetPlayerFullName() then
+
+        return false,
+            "permission_denied"
 
     end
 
@@ -627,21 +671,16 @@ function Requests.CanFulfill(
 
     end
 
-    if request.status ~= STATUS_RESERVED then
+    if request.status
+        ~= STATUS_IN_PROGRESS then
 
         return false,
-            "request_not_reserved"
+            "request_not_in_progress"
 
     end
 
-    if not request.acceptedBy then
-
-        return false,
-            "request_not_accepted"
-
-    end
-
-    if bankChar ~= request.acceptedBy then
+    if request.acceptedBy
+        ~= bankChar then
 
         return false,
             "wrong_bankchar"
@@ -658,6 +697,14 @@ function Requests.CanFulfill(
 
         return false,
             "insufficient_stock"
+
+    end
+
+    if bankChar
+        ~= GetPlayerFullName() then
+
+        return false,
+            "permission_denied"
 
     end
 
@@ -689,37 +736,6 @@ function Requests.Fulfill(
             requestID
         )
 
-    local currentAmount =
-        GBM.BankDB.GetBankCharItemCount(
-            bankChar,
-            request.itemID
-        )
-
-    local newAmount =
-        currentAmount
-        - request.amount
-
-    if newAmount < 0 then
-
-        return nil,
-            "insufficient_stock"
-
-    end
-
-    local success =
-        GBM.BankDB.SetBankCharItemCount(
-            bankChar,
-            request.itemID,
-            newAmount
-        )
-
-    if not success then
-
-        return nil,
-            "could_not_update_stock"
-
-    end
-
     request.status =
         STATUS_FULFILLED
 
@@ -729,20 +745,11 @@ function Requests.Fulfill(
     request.fulfilledAt =
         time()
 
-    GBM.BankScanner.RebuildItemIndex()
-
-    if GBM.UI
-        and GBM.UI.Bank then
-
-        GBM.UI.Bank.Refresh()
-
-    end
-
     return request
 
 end
 
-function Requests.Delete(
+function Requests.CanReopen(
     requestID
 )
 
@@ -758,33 +765,145 @@ function Requests.Delete(
 
     end
 
-    if not GBM.Permissions
-        or not GBM.Permissions.CanManageRequests then
+    if request.status
+        ~= STATUS_IN_PROGRESS then
 
         return false,
-            "permission_denied"
+            "request_not_in_progress"
 
     end
 
-    if not GBM.Permissions.CanManageRequests() then
+    if IsCurrentAcceptedBankChar(
+        request
+    ) then
 
-        return false,
-            "permission_denied"
+        return true
 
     end
 
-    if request.status == STATUS_FULFILLED then
+    if GBM.Permissions
+        and GBM.Permissions.CanManageRequests
+        and GBM.Permissions.CanManageRequests() then
+
+        return true
+
+    end
+
+    return false,
+        "permission_denied"
+
+end
+
+function Requests.Reopen(
+    requestID
+)
+
+    local canReopen,
+        reason =
+        Requests.CanReopen(
+            requestID
+        )
+
+    if not canReopen then
+
+        return nil,
+            reason
+
+    end
+
+    local request =
+        GetRequest(
+            requestID
+        )
+
+    request.status =
+        STATUS_RESERVED
+
+    request.acceptedBy = nil
+    request.acceptedAt = nil
+
+    return request
+
+end
+
+function Requests.CanDelete(
+    requestID
+)
+
+    local request =
+        GetRequest(
+            requestID
+        )
+
+    if not request then
+
+        return false,
+            "request_not_found"
+
+    end
+
+    if request.status
+        == STATUS_FULFILLED then
 
         return false,
             "fulfilled_request_cannot_be_deleted"
 
     end
 
+    if IsCurrentBankChar() then
+        return true
+    end
+
+    if request.requestedBy
+        == GetPlayerFullName() then
+
+        return true
+
+    end
+
+    if GBM.Permissions
+        and GBM.Permissions.CanManageRequests
+        and GBM.Permissions.CanManageRequests() then
+
+        return true
+
+    end
+
+    return false,
+        "permission_denied"
+
+end
+
+function Requests.Delete(
+    requestID
+)
+
+    local canDelete,
+        reason =
+        Requests.CanDelete(
+            requestID
+        )
+
+    if not canDelete then
+
+        return false,
+            reason
+
+    end
+
     local db =
         GBM.BankDB.Get()
 
-    db.requests[requestID] =
-        nil
+    if not db then
+
+        return false,
+            "database_not_initialized"
+
+    end
+
+    db.requests[
+        requestID
+    ] = nil
 
     return true
 

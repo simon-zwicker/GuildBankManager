@@ -4,33 +4,73 @@ GBM.L = {}
 
 local L = GBM.L
 
-local locale = GetLocale()
+local locale =
+    GetLocale()
 
 local ENGLISH = {
 
-    ADDON_NAME = "GuildBankManager",
+    ADDON_NAME =
+        "GuildBankManager",
 
-    BANK = "Bank",
-    REQUESTS = "Requests",
-    STATISTICS = "Statistics",
-    USAGE = "Usage",
-    SETTINGS = "Settings",
+    BANK =
+        "Bank",
 
-    ITEM = "Item",
-    TOTAL = "Amount",
-    BANK_CHARS = "Bank Character",
-    RESERVED = "Requested",
-    AVAILABLE = "Available",
-    REQUEST = "Request",
-    ADD_BANK_CHAR = "Add Bank Character",
-    RESET_BANK_CHARS = "Reset Bank Characters",
-    RESET_CONFIRMATION = "Reset all registered bank characters?",
-    ADD = "Add",
-    CANCEL = "Cancel",
-    RESET = "Reset",
-    SEARCH = "Search",
+    REQUESTS =
+        "Requests",
 
-    LOADED = "loaded - Version %s",
+    STATISTICS =
+        "Statistics",
+
+    USAGE =
+        "Usage",
+
+    SETTINGS =
+        "Settings",
+
+    ITEM =
+        "Item",
+
+    TOTAL =
+        "Amount",
+
+    BANK_CHARS =
+        "Bank Character",
+
+    RESERVED =
+        "Requested",
+
+    AVAILABLE =
+        "Available",
+
+    REQUEST =
+        "Request",
+
+    ADD_BANK_CHAR =
+        "Add Bank Character",
+
+    RESET_BANK_CHARS =
+        "Reset Bank Characters",
+
+    RESET_CONFIRMATION =
+        "Reset all registered bank characters?",
+
+    ADD =
+        "Add",
+
+    CANCEL =
+        "Cancel",
+
+    RESET =
+        "Reset",
+
+    REJECT =
+        "Reject",
+
+    SEARCH =
+        "Search",
+
+    LOADED =
+        "loaded - Version %s",
 
     GUILD_MEMBERS_LOADED =
         "Guild members loaded: %d",
@@ -104,6 +144,12 @@ local ENGLISH = {
     PERMISSIONS_DESCRIPTION =
         "Set the minimum guild rank required to use each function.",
 
+    PERMISSION_VIEW_REQUESTS =
+        "View Requests",
+
+    PERMISSION_VIEW_IN_PROGRESS_REQUESTS =
+        "View In-Progress Requests",
+
     PERMISSION_MANAGE_REQUESTS =
         "Manage Requests",
 
@@ -118,6 +164,9 @@ local ENGLISH = {
 
     PERMISSION_SYNC_BANK =
         "Synchronize Bank",
+
+    PERMISSION_VIEW_SETTINGS =
+        "View Settings",
 
     BANK_CHARS_DESCRIPTION =
         "Manage the characters registered as bank characters.",
@@ -164,42 +213,101 @@ local ENGLISH = {
     GOLD_STATUS =
         "Gold: %s",
 
-    SYNC_FINISHED =
-        "Bank sync finished: %d items, %s",
+    REQUESTS_ITEM =
+        "Item",
 
-    REQUESTS_ITEM = "Item",
-    REQUESTS_AMOUNT = "Request",
-    REQUESTS_OWN_AMOUNT = "Own",
-    REQUESTS_EMPTY = "No open requests",
+    REQUESTS_AMOUNT =
+        "Request",
 
-    COMMAND_REQUESTS = "/gbm requests - Show stored requests",
-    COMMAND_BANKCHARS = "/gbm bankchars - Show registered bank characters",
-    COMMAND_DB = "/gbm db - Show current database status",
-    COMMAND_CLEAR_REQUESTS = "/gbm clearrequests - Clear all stored requests",
+    REQUESTS_OWN_AMOUNT =
+        "Own",
 
-    BANK_DATABASE_NOT_INITIALIZED = "Bank database is not initialized.",
-    GUILD_DATABASE_NOT_INITIALIZED = "Guild database is not initialized.",
+    REQUESTS_OPEN =
+        "Requests",
 
-    NO_REQUESTS_STORED = "No requests stored.",
-    REQUESTS_COUNT = "Requests: %d",
-    REQUEST_CLEARED_COUNT = "Requests cleared: %d",
+    REQUESTS_EMPTY =
+        "No open requests",
 
-    NO_BANK_CHARS_REGISTERED = "No bank characters registered.",
-    BANK_CHARS_COUNT = "Bank characters: %d",
-    BANK_CHAR_ITEM_TYPES = "%s | Item types: %d",
+    REQUESTS_IN_PROGRESS =
+        "In Progress",
 
-    UNKNOWN_COMMAND = "Unknown command: %s",
+    REQUESTS_IN_PROGRESS_EMPTY =
+        "No requests in progress",
 
-    GUILD_DB = "GuildDB",
-    BANK_DB = "BankDB",
-    DB_MEMBERS = "  Members: %d",
-    DB_BANK_CHARS = "  Bank characters: %d",
-    DB_ADDON_USERS = "  Addon users: %d",
-    DB_ITEM_TYPES = "  Item types: %d",
-    DB_REQUESTS = "  Requests: %d",
-    DB_DEPOSITS = "  Deposits: %d",
-    DB_RESERVATIONS = "  Reservations: %d",
-    DB_REVISION = "  Revision: %d",
+    REQUEST_REJECT_REASON =
+        "Why should this request be rejected?",
+
+    REQUEST_REJECT_NO_REASON =
+        "No reason provided.",
+
+    COMMAND_REQUESTS =
+        "/gbm requests - Show stored requests",
+
+    COMMAND_BANKCHARS =
+        "/gbm bankchars - Show registered bank characters",
+
+    COMMAND_DB =
+        "/gbm db - Show current database status",
+
+    COMMAND_CLEAR_REQUESTS =
+        "/gbm clearrequests - Clear all stored requests",
+
+    BANK_DATABASE_NOT_INITIALIZED =
+        "Bank database is not initialized.",
+
+    GUILD_DATABASE_NOT_INITIALIZED =
+        "Guild database is not initialized.",
+
+    NO_REQUESTS_STORED =
+        "No requests stored.",
+
+    REQUESTS_COUNT =
+        "Requests: %d",
+
+    REQUEST_CLEARED_COUNT =
+        "Requests cleared: %d",
+
+    NO_BANK_CHARS_REGISTERED =
+        "No bank characters registered.",
+
+    BANK_CHARS_COUNT =
+        "Bank characters: %d",
+
+    BANK_CHAR_ITEM_TYPES =
+        "%s | Item types: %d",
+
+    UNKNOWN_COMMAND =
+        "Unknown command: %s",
+
+    GUILD_DB =
+        "GuildDB",
+
+    BANK_DB =
+        "BankDB",
+
+    DB_MEMBERS =
+        "  Members: %d",
+
+    DB_BANK_CHARS =
+        "  Bank characters: %d",
+
+    DB_ADDON_USERS =
+        "  Addon users: %d",
+
+    DB_ITEM_TYPES =
+        "  Item types: %d",
+
+    DB_REQUESTS =
+        "  Requests: %d",
+
+    DB_DEPOSITS =
+        "  Deposits: %d",
+
+    DB_RESERVATIONS =
+        "  Reservations: %d",
+
+    DB_REVISION =
+        "  Revision: %d",
 
 }
 
@@ -211,7 +319,8 @@ local function ApplyLocale(
         translations
     ) do
 
-        L[key] = value
+        L[key] =
+            value
 
     end
 
@@ -221,4 +330,5 @@ ApplyLocale(
     ENGLISH
 )
 
-GBM.Locale = locale
+GBM.Locale =
+    locale

@@ -5,11 +5,17 @@ GBM.Permissions = {}
 local Permissions = GBM.Permissions
 
 local DEFAULT_PERMISSIONS = {
+    viewRequests = 1,
+    viewInProgressRequests = 1,
+
     manageRequests = 1,
     assignRequests = 1,
     rejectRequests = 1,
+
     manageBankChars = 1,
     syncBank = 1,
+
+    viewSettings = 0,
 }
 
 local function GetGuildDatabase()
@@ -112,6 +118,10 @@ local function IsRegisteredBankChar()
 
     local fullName =
         GBM.WoW.GetFullPlayerName()
+
+    if not fullName then
+        return false
+    end
 
     return db.bankChars[fullName] ~= nil
 
@@ -218,6 +228,30 @@ function Permissions.SetPermissionRank(
 
 end
 
+function Permissions.CanViewRequests()
+
+    if IsRegisteredBankChar() then
+        return true
+    end
+
+    return HasPermission(
+        "viewRequests"
+    )
+
+end
+
+function Permissions.CanViewInProgressRequests()
+
+    if IsRegisteredBankChar() then
+        return true
+    end
+
+    return HasPermission(
+        "viewInProgressRequests"
+    )
+
+end
+
 function Permissions.CanManageRequests()
 
     return HasPermission(
@@ -254,6 +288,18 @@ function Permissions.CanSyncBank()
 
     return HasPermission(
         "syncBank"
+    )
+
+end
+
+function Permissions.CanViewSettings()
+
+    if IsGuildLeader() then
+        return true
+    end
+
+    return HasPermission(
+        "viewSettings"
     )
 
 end

@@ -36,6 +36,7 @@ UI\Bank\BankExtendedRow.lua
 UI\Bank\BankRows.lua
 UI\Bank\BankScanner.lua
 
+UI\Requests\InProgressRow.lua
 UI\Requests\RequestRow.lua
 UI\Requests\Requests.lua
 UI\Statistics.lua

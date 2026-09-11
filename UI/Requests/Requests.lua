@@ -6,17 +6,20 @@ GBM.UI.Requests = GBM.UI.Requests or {}
 local RequestsUI = GBM.UI.Requests
 
 local ROW_HEIGHT = 42
-local HEADER_HEIGHT = 32
-
-local EMPTY_TEXT_SIZE = 22
+local HEADER_HEIGHT = 34
+local SECTION_GAP = 18
+local EMPTY_TEXT_SIZE = 18
 
 local function GetLocalization()
+
     return GBM.L
+
 end
 
-local function CreateHeader(parent)
-
-    local L = GetLocalization()
+local function CreateSectionHeader(
+    parent,
+    text
+)
 
     local header =
         CreateFrame(
@@ -29,153 +32,136 @@ local function CreateHeader(parent)
         HEADER_HEIGHT
     )
 
-    header.icon =
+    local title =
         header:CreateFontString(
             nil,
             "OVERLAY",
             "GameFontNormal"
         )
 
-    header.icon:SetPoint(
+    title:SetPoint(
         "LEFT",
         5,
         0
     )
 
-    header.icon:SetText(
+    title:SetFont(
+        "Fonts\\FRIZQT__.TTF",
+        18,
         ""
     )
 
-    header.item =
-        header:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontNormal"
-        )
-
-    header.item:SetPoint(
-        "LEFT",
-        45,
+    title:SetTextColor(
+        1,
+        0.82,
         0
     )
 
-    header.item:SetWidth(
-        220
+    title:SetText(
+        text
     )
 
-    header.item:SetText(
-        L.REQUESTS_ITEM
-        or "Item"
-    )
-
-    header.amount =
-        header:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontNormal"
-        )
-
-    header.amount:SetPoint(
-        "LEFT",
-        275,
-        0
-    )
-
-    header.amount:SetWidth(
-        70
-    )
-
-    header.amount:SetJustifyH(
-        "CENTER"
-    )
-
-    header.amount:SetText(
-        L.REQUESTS_AMOUNT
-        or "Request"
-    )
-
-    header.own =
-        header:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontNormal"
-        )
-
-    header.own:SetPoint(
-        "LEFT",
-        350,
-        0
-    )
-
-    header.own:SetWidth(
-        70
-    )
-
-    header.own:SetJustifyH(
-        "CENTER"
-    )
-
-    header.own:SetText(
-        L.REQUESTS_OWN_AMOUNT
-        or "Own"
-    )
+    header.title =
+        title
 
     return header
+
 end
 
-local function CreateEmptyText(parent)
+local function CreateEmptyText(
+    parent,
+    text
+)
 
-    local L = GetLocalization()
-
-    local text =
+    local label =
         parent:CreateFontString(
             nil,
-            "OVERLAY"
+            "OVERLAY",
+            "GameFontNormal"
         )
 
-    text:SetPoint(
-        "TOPLEFT",
-        0,
-        -20
-    )
-
-    text:SetPoint(
-        "TOPRIGHT",
-        0,
-        -20
-    )
-
-    text:SetJustifyH(
-        "CENTER"
-    )
-
-    text:SetJustifyV(
-        "MIDDLE"
-    )
-
-    text:SetText(
-        L.REQUESTS_EMPTY
-        or "No open requests"
-    )
-
-    text:SetTextColor(
-        1,
-        1,
-        1
-    )
-
     local font,
-        size,
+        _,
         flags =
-        text:GetFont()
+        label:GetFont()
 
-    text:SetFont(
+    label:SetFont(
         font,
         EMPTY_TEXT_SIZE,
         flags
     )
 
-    return text
+    label:SetText(
+        text
+    )
+
+    label:SetTextColor(
+        0.65,
+        0.65,
+        0.65
+    )
+
+    label:SetJustifyH(
+        "CENTER"
+    )
+
+    return label
+
+end
+
+local function BuildRequestList(
+    requests
+)
+
+    local list = {}
+
+    for requestID, request in pairs(
+        requests or {}
+    ) do
+
+        if request then
+
+            if not request.id then
+                request.id =
+                    requestID
+            end
+
+            list[
+                #list + 1
+            ] =
+                request
+
+        end
+
+    end
+
+    return list
+
+end
+
+local function SortRequests(
+    requests
+)
+
+    table.sort(
+        requests,
+        function(a, b)
+
+            local aTime =
+                a.requestedAt
+                or a.createdAt
+                or 0
+
+            local bTime =
+                b.requestedAt
+                or b.createdAt
+                or 0
+
+            return aTime < bTime
+
+        end
+    )
+
 end
 
 local function GetRequests()
@@ -191,38 +177,93 @@ local function GetRequests()
 
     end
 
-    if GBM.Requests.GetRequests then
+    return {}
 
-        return GBM.Requests.GetRequests()
-            or {}
+end
+
+local function ClearRows(
+    rows
+)
+
+    for _, row in ipairs(
+        rows or {}
+    ) do
+
+        row:Hide()
+        row:SetParent(nil)
 
     end
 
-    return {}
 end
 
-local function SortRequests(requests)
+local function CreateRows(
+    parent,
+    requests,
+    rowFactory,
+    rows
+)
 
-    table.sort(
-        requests,
-        function(a, b)
+    local visibleIndex = 0
 
-            local aTime =
-                a.createdAt
-                or 0
+    for _, request in ipairs(
+        requests
+    ) do
 
-            local bTime =
-                b.createdAt
-                or 0
+        if request then
 
-            return aTime < bTime
+            visibleIndex =
+                visibleIndex + 1
+
+            local row =
+                rowFactory(
+                    parent,
+                    request
+                )
+
+            if row then
+
+                row:SetPoint(
+                    "TOPLEFT",
+                    0,
+                    -(
+                        (visibleIndex - 1)
+                        * ROW_HEIGHT
+                    )
+                )
+
+                row:SetPoint(
+                    "TOPRIGHT",
+                    0,
+                    -(
+                        (visibleIndex - 1)
+                        * ROW_HEIGHT
+                    )
+                )
+
+                row:SetHeight(
+                    ROW_HEIGHT
+                )
+
+                row:Show()
+
+                rows[
+                    #rows + 1
+                ] =
+                    row
+
+            end
 
         end
-    )
+
+    end
+
+    return visibleIndex
 
 end
 
-function RequestsUI.Initialize(parent)
+function RequestsUI.Initialize(
+    parent
+)
 
     if RequestsUI.frame then
         return RequestsUI.frame
@@ -242,175 +283,398 @@ function RequestsUI.Initialize(parent)
     RequestsUI.frame =
         frame
 
-    RequestsUI.header =
-        CreateHeader(
-            frame
+    RequestsUI.openHeader =
+        CreateSectionHeader(
+            frame,
+            GetLocalization().REQUESTS_OPEN
         )
 
-    RequestsUI.header:SetPoint(
+    RequestsUI.openHeader:SetPoint(
         "TOPLEFT",
         0,
         0
     )
 
-    RequestsUI.header:SetPoint(
+    RequestsUI.openHeader:SetPoint(
         "TOPRIGHT",
         0,
         0
     )
 
-    RequestsUI.container =
+    RequestsUI.openContainer =
         CreateFrame(
             "Frame",
             nil,
             frame
         )
 
-    RequestsUI.container:SetPoint(
+    RequestsUI.openContainer:SetPoint(
         "TOPLEFT",
         0,
         -HEADER_HEIGHT
     )
 
-    RequestsUI.container:SetPoint(
+    RequestsUI.openContainer:SetPoint(
         "TOPRIGHT",
         0,
         -HEADER_HEIGHT
     )
 
-    RequestsUI.container:SetHeight(
-        1
-    )
+    RequestsUI.openRows = {}
 
-    RequestsUI.emptyText =
+    RequestsUI.openEmpty =
         CreateEmptyText(
-            RequestsUI.container
+            RequestsUI.openContainer,
+            GetLocalization().REQUESTS_EMPTY
         )
 
-    RequestsUI.emptyText:SetPoint(
+    RequestsUI.openEmpty:SetPoint(
         "TOPLEFT",
         0,
-        -20
+        -10
     )
 
-    RequestsUI.emptyText:SetPoint(
+    RequestsUI.openEmpty:SetPoint(
         "TOPRIGHT",
         0,
-        -20
+        -10
     )
 
-    RequestsUI.rows = {}
+    RequestsUI.progressHeader =
+        CreateSectionHeader(
+            frame,
+            GetLocalization().REQUESTS_IN_PROGRESS
+        )
+
+    RequestsUI.progressContainer =
+        CreateFrame(
+            "Frame",
+            nil,
+            frame
+        )
+
+    RequestsUI.progressRows = {}
+
+    RequestsUI.progressEmpty =
+        CreateEmptyText(
+            RequestsUI.progressContainer,
+            GetLocalization().REQUESTS_IN_PROGRESS_EMPTY
+        )
+
+    RequestsUI.progressEmpty:SetPoint(
+        "TOPLEFT",
+        0,
+        -10
+    )
+
+    RequestsUI.progressEmpty:SetPoint(
+        "TOPRIGHT",
+        0,
+        -10
+    )
 
     return frame
+
 end
 
 function RequestsUI.ClearRows()
 
-    for _, row in ipairs(
-        RequestsUI.rows or {}
-    ) do
+    ClearRows(
+        RequestsUI.openRows
+    )
 
-        row:Hide()
-        row:SetParent(nil)
+    ClearRows(
+        RequestsUI.progressRows
+    )
 
-    end
-
-    RequestsUI.rows = {}
+    RequestsUI.openRows = {}
+    RequestsUI.progressRows = {}
 
 end
 
 function RequestsUI.Refresh()
 
-    if not RequestsUI.frame
-        or not RequestsUI.container then
-
+    if not RequestsUI.frame then
         return
     end
 
     RequestsUI.ClearRows()
 
-    local requests =
-        GetRequests()
+    local permissions =
+        GBM.Permissions
+
+    if not permissions
+        or not permissions.CanViewRequests
+        or not permissions.CanViewRequests() then
+
+        RequestsUI.frame:Hide()
+
+        return
+
+    end
+
+    RequestsUI.frame:Show()
+
+    local allRequests =
+        BuildRequestList(
+            GetRequests()
+        )
 
     SortRequests(
-        requests
+        allRequests
     )
 
-    local visibleIndex = 0
+    local openRequests = {}
+    local progressRequests = {}
+
+    local canViewProgress =
+        permissions.CanViewInProgressRequests
+        and permissions.CanViewInProgressRequests()
+
+    local currentPlayer =
+        GBM.WoW.GetFullPlayerName()
 
     for _, request in ipairs(
-        requests
+        allRequests
     ) do
 
-        if request
-            and request.status
-            and request.status ~= "fulfilled"
-            and request.status ~= "cancelled" then
+        if request.status
+            == "reserved" then
 
-            visibleIndex =
-                visibleIndex + 1
-
-            local row =
-                RequestsUI.CreateRequestRow(
-                    RequestsUI.container,
-                    request
-                )
-
-            row:SetPoint(
-                "TOPLEFT",
-                0,
-                -(
-                    (visibleIndex - 1)
-                    * ROW_HEIGHT
-                )
-            )
-
-            row:SetPoint(
-                "TOPRIGHT",
-                0,
-                -(
-                    (visibleIndex - 1)
-                    * ROW_HEIGHT
-                )
-            )
-
-            row:SetHeight(
-                ROW_HEIGHT
-            )
-
-            row:Show()
-
-            RequestsUI.rows[
-                #RequestsUI.rows + 1
+            openRequests[
+                #openRequests + 1
             ] =
-                row
+                request
+
+        elseif request.status
+            == "in_progress" then
+
+            if canViewProgress then
+
+                progressRequests[
+                    #progressRequests + 1
+                ] =
+                    request
+
+            elseif request.acceptedBy
+                == currentPlayer then
+
+                progressRequests[
+                    #progressRequests + 1
+                ] =
+                    request
+
+            end
 
         end
 
     end
 
-    if visibleIndex == 0 then
+    local openCount =
+        CreateRows(
+            RequestsUI.openContainer,
+            openRequests,
+            RequestsUI.CreateRequestRow,
+            RequestsUI.openRows
+        )
 
-        RequestsUI.emptyText:Show()
+    local progressCount = 0
 
-    else
+    if canViewProgress then
 
-        RequestsUI.emptyText:Hide()
+        progressCount =
+            CreateRows(
+                RequestsUI.progressContainer,
+                progressRequests,
+                RequestsUI.CreateInProgressRow,
+                RequestsUI.progressRows
+            )
 
     end
 
-    RequestsUI.container:SetHeight(
+    if openCount == 0 then
+
+        RequestsUI.openEmpty:Show()
+
+    else
+
+        RequestsUI.openEmpty:Hide()
+
+    end
+
+    if progressCount == 0 then
+
+        RequestsUI.progressEmpty:Show()
+
+    else
+
+        RequestsUI.progressEmpty:Hide()
+
+    end
+
+    RequestsUI.openContainer:SetHeight(
         math.max(
             1,
-            visibleIndex
-            * ROW_HEIGHT
+            openCount * ROW_HEIGHT
+        )
+    )
+
+    RequestsUI.progressHeader:SetPoint(
+        "TOPLEFT",
+        frame,
+        "TOPLEFT",
+        0,
+        -(
+            HEADER_HEIGHT
+            + math.max(
+                1,
+                openCount * ROW_HEIGHT
+            )
+            + SECTION_GAP
+        )
+    )
+
+    RequestsUI.progressHeader:SetPoint(
+        "TOPRIGHT",
+        frame,
+        "TOPRIGHT",
+        0,
+        -(
+            HEADER_HEIGHT
+            + math.max(
+                1,
+                openCount * ROW_HEIGHT
+            )
+            + SECTION_GAP
+        )
+    )
+
+    RequestsUI.progressContainer:SetPoint(
+        "TOPLEFT",
+        RequestsUI.progressHeader,
+        "BOTTOMLEFT",
+        0,
+        0
+    )
+
+    RequestsUI.progressContainer:SetPoint(
+        "TOPRIGHT",
+        RequestsUI.progressHeader,
+        "BOTTOMRIGHT",
+        0,
+        0
+    )
+
+    RequestsUI.progressContainer:SetHeight(
+        math.max(
+            1,
+            progressCount * ROW_HEIGHT
         )
     )
 
 end
 
-function RequestsUI.ShowRejectDialog(request)
+function RequestsUI.ShowRejectDialog(
+    request
+)
 
-    -- Wird im nächsten Schritt ergänzt.
+    if not request then
+        return
+    end
+
+    local dialogName =
+        "GBM_REQUEST_REJECT_DIALOG"
+
+    if not StaticPopupDialogs[
+        dialogName
+    ] then
+
+        StaticPopupDialogs[
+            dialogName
+        ] = {
+
+            text =
+                GetLocalization().REQUEST_REJECT_REASON,
+
+            button1 =
+                GetLocalization().REJECT,
+
+            button2 =
+                GetLocalization().CANCEL,
+
+            hasEditBox = true,
+
+            editBoxWidth = 300,
+
+            timeout = 0,
+
+            whileDead = true,
+
+            hideOnEscape = true,
+
+            preferredIndex = 3,
+
+            OnShow = function(
+                popup
+            )
+
+                popup.editBox:SetText(
+                    ""
+                )
+
+                popup.editBox:SetFocus()
+
+            end,
+
+            OnAccept = function(
+                popup
+            )
+
+                local reasonText =
+                    popup.editBox:GetText()
+
+                reasonText =
+                    string.gsub(
+                        reasonText
+                        or "",
+                        "^%s+",
+                        ""
+                    )
+
+                reasonText =
+                    string.gsub(
+                        reasonText,
+                        "%s+$",
+                        ""
+                    )
+
+                if reasonText == "" then
+
+                    reasonText =
+                        GetLocalization().REQUEST_REJECT_NO_REASON
+
+                end
+
+                local success =
+                    GBM.Requests.Reject(
+                        request.id,
+                        reasonText
+                    )
+
+                if success then
+
+                    RequestsUI.Refresh()
+
+                end
+
+            end,
+
+        }
+
+    end
+
+    StaticPopup_Show(
+        dialogName
+    )
 
 end

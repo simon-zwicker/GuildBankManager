@@ -10,26 +10,55 @@ local PermissionsUI =
 local L = GBM.L
 
 local PERMISSIONS = {
+
+    {
+        key = "viewRequests",
+        label =
+            L.PERMISSION_VIEW_REQUESTS,
+    },
+
+    {
+        key = "viewInProgressRequests",
+        label =
+            L.PERMISSION_VIEW_IN_PROGRESS_REQUESTS,
+    },
+
     {
         key = "manageRequests",
-        label = L.PERMISSION_MANAGE_REQUESTS,
+        label =
+            L.PERMISSION_MANAGE_REQUESTS,
     },
+
     {
         key = "assignRequests",
-        label = L.PERMISSION_ASSIGN_REQUESTS,
+        label =
+            L.PERMISSION_ASSIGN_REQUESTS,
     },
+
     {
         key = "rejectRequests",
-        label = L.PERMISSION_REJECT_REQUESTS,
+        label =
+            L.PERMISSION_REJECT_REQUESTS,
     },
+
     {
         key = "manageBankChars",
-        label = L.PERMISSION_MANAGE_BANK_CHARS,
+        label =
+            L.PERMISSION_MANAGE_BANK_CHARS,
     },
+
     {
         key = "syncBank",
-        label = L.PERMISSION_SYNC_BANK,
+        label =
+            L.PERMISSION_SYNC_BANK,
     },
+
+    {
+        key = "viewSettings",
+        label =
+            L.PERMISSION_VIEW_SETTINGS,
+    },
+
 }
 
 local ROW_HEIGHT = 46
@@ -67,67 +96,57 @@ local function GetRanks()
 end
 
 local function GetSelectedRank(
-    permissionKey
+    permission
 )
 
     return GBM.Permissions.GetPermissionRank(
-        permissionKey
+        permission
     )
-
-end
-
-local function GetDropdownText(
-    dropdown
-)
-
-    local dropdownName =
-        dropdown:GetName()
-
-    if not dropdownName then
-        return nil
-    end
-
-    return _G[
-        dropdownName
-        .. "Text"
-    ]
 
 end
 
 local function UpdateDropdownText(
     dropdown,
-    permissionKey
+    permission
 )
 
     local rankIndex =
         GetSelectedRank(
-            permissionKey
+            permission
         )
 
     local rankName =
-        GBM.WoW.GetGuildRankName(
+        tostring(
             rankIndex
+            or 0
         )
+
+    local count =
+        GBM.WoW.GetGuildRankCount()
+
+    for index = 0, count - 1 do
+
+        if index == rankIndex then
+
+            local name =
+                GBM.WoW.GetGuildRankName(
+                    index
+                )
+
+            if name then
+                rankName = name
+            end
+
+            break
+
+        end
+
+    end
 
     UIDropDownMenu_SetText(
         dropdown,
         rankName
     )
-
-    local text =
-        GetDropdownText(
-            dropdown
-        )
-
-    if text then
-
-        text:SetFont(
-            "Fonts\\FRIZQT__.TTF",
-            16,
-            ""
-        )
-
-    end
 
 end
 
@@ -153,18 +172,13 @@ end
 
 local function CreateDropdown(
     parent,
-    permission,
-    index
+    permission
 )
-
-    local dropdownName =
-        "GBMSettingsPermissionDropdown"
-        .. index
 
     local dropdown =
         CreateFrame(
             "Frame",
-            dropdownName,
+            nil,
             parent,
             "UIDropDownMenuTemplate"
         )
@@ -228,7 +242,8 @@ local function CreateDropdown(
                 info.checked =
                     GetSelectedRank(
                         permission.key
-                    ) == rank.index
+                    )
+                    == rank.index
 
                 info.disabled =
                     not GBM.Permissions.IsGuildLeader()
@@ -270,10 +285,6 @@ local function CreateRow(
             parent
         )
 
-    row:SetHeight(
-        ROW_HEIGHT
-    )
-
     row:SetPoint(
         "TOPLEFT",
         parent,
@@ -290,6 +301,10 @@ local function CreateRow(
         yOffset
     )
 
+    row:SetHeight(
+        ROW_HEIGHT
+    )
+
     local label =
         row:CreateFontString(
             nil,
@@ -297,8 +312,6 @@ local function CreateRow(
         )
 
     label:SetPoint(
-        "LEFT",
-        row,
         "LEFT",
         5,
         0
@@ -317,9 +330,11 @@ local function CreateRow(
     row.Dropdown =
         CreateDropdown(
             row,
-            permission,
-            index
+            permission
         )
+
+    row.Label =
+        label
 
     return row
 
@@ -335,18 +350,15 @@ function PermissionsUI.Refresh()
         PERMISSIONS
     ) do
 
-        local dropdown =
-            permission.dropdown
-
-        if dropdown then
+        if permission.dropdown then
 
             UpdateDropdownText(
-                dropdown,
+                permission.dropdown,
                 permission.key
             )
 
             UpdateDropdownState(
-                dropdown
+                permission.dropdown
             )
 
         end
@@ -387,7 +399,7 @@ function PermissionsUI.Initialize(
     )
 
     frame:SetHeight(
-        300
+        520
     )
 
     PermissionsUI.Frame =
@@ -456,7 +468,8 @@ function PermissionsUI.Initialize(
                 frame,
                 permission,
                 index,
-                -62 - (
+                -62
+                - (
                     (index - 1)
                     * ROW_HEIGHT
                 )

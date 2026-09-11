@@ -76,130 +76,22 @@ local function GetItemData(
 
 end
 
-local function GetOwnAmount(
+local function IsOwner(
     request
 )
 
-    if not request
-        or not request.itemID then
-
-        return 0
-
-    end
-
-    local fullName =
-        GBM.WoW.GetFullPlayerName()
-
-    if not fullName then
-        return 0
-    end
-
-    if GBM.BankDB
-        and GBM.BankDB.GetAvailableAmount then
-
-        return GBM.BankDB.GetAvailableAmount(
-            fullName,
-            request.itemID
-        ) or 0
-
-    end
-
-    return 0
+    return request.acceptedBy
+        == GBM.WoW.GetFullPlayerName()
 
 end
 
-local function GetCurrentBankChar()
-
-    return GBM.WoW.GetFullPlayerName()
-
-end
-
-local function CanAccept(
+local function CanReopen(
     request
 )
 
-    if not request then
-        return false
-    end
-
-    local isBankChar =
-        GBM.Permissions
-        and GBM.Permissions.IsBankChar
-        and GBM.Permissions.IsBankChar()
-
-    local canAssign =
-        GBM.Permissions
-        and GBM.Permissions.CanAssignRequests
-        and GBM.Permissions.CanAssignRequests()
-
-    if not isBankChar
-        and not canAssign then
-
-        return false
-
-    end
-
-    local bankChar =
-        GetCurrentBankChar()
-
-    if not bankChar then
-        return false
-    end
-
-    if not GBM.BankDB
-        or not GBM.BankDB.CanFulfill then
-
-        return false
-
-    end
-
-    return GBM.BankDB.CanFulfill(
-        bankChar,
-        request.itemID,
-        request.amount
-    )
-
-end
-
-local function CanReject()
-
-    local isBankChar =
-        GBM.Permissions
-        and GBM.Permissions.IsBankChar
-        and GBM.Permissions.IsBankChar()
-
-    local canReject =
-        GBM.Permissions
-        and GBM.Permissions.CanRejectRequests
-        and GBM.Permissions.CanRejectRequests()
-
-    return isBankChar
-        or canReject
-
-end
-
-local function CanRemove(
-    request
-)
-
-    if not request then
-        return false
-    end
-
-    local isBankChar =
-        GBM.Permissions
-        and GBM.Permissions.IsBankChar
-        and GBM.Permissions.IsBankChar()
-
-    if isBankChar then
-        return true
-    end
-
-    local fullName =
-        GBM.WoW.GetFullPlayerName()
-
-    if request.requestedBy
-        == fullName then
+    if IsOwner(
+        request
+    ) then
 
         return true
 
@@ -211,7 +103,20 @@ local function CanRemove(
 
 end
 
-function RequestsUI.CreateRequestRow(
+local function CanDelete()
+
+    return GBM.Permissions
+        and (
+            GBM.Permissions.IsBankChar
+            and GBM.Permissions.IsBankChar()
+        or
+            GBM.Permissions.CanManageRequests
+            and GBM.Permissions.CanManageRequests()
+        )
+
+end
+
+function RequestsUI.CreateInProgressRow(
     parent,
     request
 )
@@ -308,18 +213,18 @@ function RequestsUI.CreateRequestRow(
         )
     )
 
-    row.requestAmount =
+    row.amount =
         row:CreateFontString(
             nil,
             "OVERLAY",
             "GameFontNormal"
         )
 
-    row.requestAmount:SetWidth(
+    row.amount:SetWidth(
         70
     )
 
-    row.requestAmount:SetPoint(
+    row.amount:SetPoint(
         "LEFT",
         row.itemName,
         "RIGHT",
@@ -327,60 +232,75 @@ function RequestsUI.CreateRequestRow(
         0
     )
 
-    row.requestAmount:SetJustifyH(
+    row.amount:SetJustifyH(
         "CENTER"
     )
 
-    row.ownAmount =
+    row.amount:SetText(
+        tostring(
+            request.amount
+            or 0
+        )
+    )
+
+    row.acceptedBy =
         row:CreateFontString(
             nil,
             "OVERLAY",
             "GameFontNormal"
         )
 
-    row.ownAmount:SetWidth(
-        70
-    )
-
-    row.ownAmount:SetPoint(
+    row.acceptedBy:SetPoint(
         "LEFT",
-        row.requestAmount,
+        row.amount,
         "RIGHT",
         5,
         0
     )
 
-    row.ownAmount:SetJustifyH(
-        "CENTER"
+    row.acceptedBy:SetWidth(
+        150
     )
 
-    row.acceptButton =
+    row.acceptedBy:SetJustifyH(
+        "LEFT"
+    )
+
+    row.acceptedBy:SetText(
+        request.acceptedBy
+        or ""
+    )
+
+    -- Fulfill / Package
+
+    row.fulfillButton =
         CreateButton(
             row,
-            "Interface\\Buttons\\UI-CheckBox-Check"
+            "Interface\\Buttons\\UI-GroupLoot-Dice-Up"
         )
 
-    row.acceptButton:SetPoint(
+    row.fulfillButton:SetPoint(
         "RIGHT",
         -105,
         0
     )
 
-    row.acceptButton:SetScript(
+    row.fulfillButton:SetScript(
         "OnClick",
         function()
 
-            local bankChar =
-                GetCurrentBankChar()
+            if not IsOwner(
+                request
+            ) then
 
-            if not bankChar then
                 return
+
             end
 
             local success =
-                GBM.Requests.Accept(
+                GBM.Requests.Fulfill(
                     request.id,
-                    bankChar
+                    request.acceptedBy
                 )
 
             if success then
@@ -392,67 +312,65 @@ function RequestsUI.CreateRequestRow(
         end
     )
 
-    row.rejectButton =
+    -- Reopen
+
+    row.reopenButton =
         CreateButton(
             row,
-            "Interface\\RaidFrame\\ReadyCheck-NotReady"
+            "Interface\\Buttons\\UI-RefreshButton"
         )
 
-    row.rejectButton:SetPoint(
+    row.reopenButton:SetPoint(
         "RIGHT",
         -70,
         0
     )
 
-    row.rejectButton:SetScript(
+    row.reopenButton:SetScript(
         "OnClick",
         function()
 
-            RequestsUI.ShowRejectDialog(
-                request
-            )
+            local success =
+                GBM.Requests.Reopen(
+                    request.id
+                )
+
+            if success then
+
+                RequestsUI.Refresh()
+
+            end
 
         end
     )
 
-    row.removeButton =
+    -- Delete
+
+    row.deleteButton =
         CreateButton(
             row,
             "Interface\\Buttons\\UI-GroupLoot-Pass-Down"
         )
 
-    row.removeButton:SetPoint(
+    row.deleteButton:SetPoint(
         "RIGHT",
         -35,
         0
     )
 
-    row.removeButton:SetScript(
+    row.deleteButton:SetScript(
         "OnClick",
         function()
 
-            local success
-
-            if request.requestedBy
-                == GetCurrentBankChar()
-                and not GBM.Permissions.IsBankChar() then
-
-                success =
-                    GBM.Requests.Cancel(
-                        request.id
-                    )
-
-            else
-
-                success =
-                    GBM.Requests.Delete(
-                        request.id
-                    )
-
-            end
+            local success =
+                GBM.Requests.Delete(
+                    request.id
+                )
 
             if success then
+
                 RequestsUI.Refresh()
+
             end
 
         end
@@ -482,52 +400,48 @@ function RequestsUI.CreateRequestRow(
             )
         )
 
-        self.requestAmount:SetText(
+        self.amount:SetText(
             tostring(
                 request.amount
                 or 0
             )
         )
 
-        self.ownAmount:SetText(
-            tostring(
-                GetOwnAmount(
-                    request
-                )
-            )
+        self.acceptedBy:SetText(
+            request.acceptedBy
+            or ""
         )
 
-        local open =
-            request.status
-            == "reserved"
+        self.fulfillButton:Hide()
+        self.reopenButton:Hide()
+        self.deleteButton:Hide()
 
-        self.acceptButton:Hide()
-        self.rejectButton:Hide()
-        self.removeButton:Hide()
+        if request.status
+            ~= "in_progress" then
 
-        if not open then
             return
+
         end
 
-        if CanAccept(
+        if IsOwner(
             request
         ) then
 
-            self.acceptButton:Show()
+            self.fulfillButton:Show()
 
         end
 
-        if CanReject() then
-
-            self.rejectButton:Show()
-
-        end
-
-        if CanRemove(
+        if CanReopen(
             request
         ) then
 
-            self.removeButton:Show()
+            self.reopenButton:Show()
+
+        end
+
+        if CanDelete() then
+
+            self.deleteButton:Show()
 
         end
 
