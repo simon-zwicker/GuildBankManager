@@ -19,6 +19,14 @@ end
 local function PrintHelp()
 
     PrintMessage(
+        L.COMMAND_TOGGLE
+    )
+
+    PrintMessage(
+        L.COMMAND_HELP
+    )
+
+    PrintMessage(
         L.COMMAND_REQUESTS
     )
 
@@ -386,6 +394,14 @@ local function HandleCommand(
         )
 
     if command == "" then
+
+        GBM.UI.Toggle()
+
+        return
+
+    end
+
+    if command == "help" then
 
         PrintHelp()
 

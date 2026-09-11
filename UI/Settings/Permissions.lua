@@ -134,7 +134,9 @@ local function UpdateDropdownText(
                 )
 
             if name then
+
                 rankName = name
+
             end
 
             break
@@ -175,10 +177,14 @@ local function CreateDropdown(
     permission
 )
 
+    local dropdownName =
+        "GBMPermissionsDropdown_"
+        .. permission.key
+
     local dropdown =
         CreateFrame(
             "Frame",
-            nil,
+            dropdownName,
             parent,
             "UIDropDownMenuTemplate"
         )
@@ -343,7 +349,9 @@ end
 function PermissionsUI.Refresh()
 
     if not PermissionsUI.Frame then
+
         return
+
     end
 
     for _, permission in ipairs(
@@ -372,7 +380,9 @@ function PermissionsUI.Initialize(
 )
 
     if PermissionsUI.Frame then
+
         return PermissionsUI.Frame
+
     end
 
     local frame =

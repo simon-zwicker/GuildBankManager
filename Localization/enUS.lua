@@ -309,6 +309,12 @@ local ENGLISH = {
     DB_REVISION =
         "  Revision: %d",
 
+    COMMAND_TOGGLE =
+    "/gbm - Toggle Guild Bank Manager",
+
+    COMMAND_HELP =
+        "/gbm help - Show available commands",
+
 }
 
 local function ApplyLocale(
