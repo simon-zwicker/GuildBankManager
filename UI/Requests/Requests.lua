@@ -6,9 +6,22 @@ GBM.UI.Requests = GBM.UI.Requests or {}
 local RequestsUI = GBM.UI.Requests
 
 local ROW_HEIGHT = 42
-local HEADER_HEIGHT = 34
+local SECTION_HEADER_HEIGHT = 34
+local COLUMN_HEADER_HEIGHT = 26
 local SECTION_GAP = 18
 local EMPTY_TEXT_SIZE = 18
+
+local ICON_OFFSET = 5
+local ITEM_OFFSET = 50
+local AMOUNT_OFFSET = 280
+local STOCK_OFFSET = 355
+local BANK_CHAR_OFFSET = 355
+local REQUESTER_OFFSET = 510
+
+local ITEM_WIDTH = 220
+local AMOUNT_WIDTH = 70
+local STOCK_WIDTH = 70
+local NAME_WIDTH = 150
 
 local function GetLocalization()
 
@@ -29,7 +42,7 @@ local function CreateSectionHeader(
         )
 
     header:SetHeight(
-        HEADER_HEIGHT
+        SECTION_HEADER_HEIGHT
     )
 
     local title =
@@ -63,6 +76,70 @@ local function CreateSectionHeader(
 
     header.title =
         title
+
+    return header
+
+end
+
+local function CreateColumnHeader(
+    parent,
+    columns
+)
+
+    local header =
+        CreateFrame(
+            "Frame",
+            nil,
+            parent
+        )
+
+    header:SetHeight(
+        COLUMN_HEADER_HEIGHT
+    )
+
+    for _, column in ipairs(
+        columns
+    ) do
+
+        local label =
+            header:CreateFontString(
+                nil,
+                "OVERLAY",
+                "GameFontNormal"
+            )
+
+        label:SetPoint(
+            "LEFT",
+            column.offset,
+            0
+        )
+
+        label:SetWidth(
+            column.width
+        )
+
+        label:SetJustifyH(
+            column.justify
+            or "LEFT"
+        )
+
+        label:SetFont(
+            "Fonts\\FRIZQT__.TTF",
+            14,
+            ""
+        )
+
+        label:SetTextColor(
+            1,
+            1,
+            1
+        )
+
+        label:SetText(
+            column.text
+        )
+
+    end
 
     return header
 
@@ -122,8 +199,10 @@ local function BuildRequestList(
         if request then
 
             if not request.id then
+
                 request.id =
                     requestID
+
             end
 
             list[
@@ -283,6 +362,10 @@ function RequestsUI.Initialize(
     RequestsUI.frame =
         frame
 
+    --
+    -- Open Requests
+    --
+
     RequestsUI.openHeader =
         CreateSectionHeader(
             frame,
@@ -301,6 +384,60 @@ function RequestsUI.Initialize(
         0
     )
 
+    RequestsUI.openColumnHeader =
+        CreateColumnHeader(
+            frame,
+            {
+                {
+                    text = "",
+                    offset = ICON_OFFSET,
+                    width = 40,
+                },
+                {
+                    text =
+                        GetLocalization().REQUESTS_ITEM,
+                    offset = ITEM_OFFSET,
+                    width = ITEM_WIDTH,
+                },
+                {
+                    text =
+                        GetLocalization().REQUESTS_AMOUNT,
+                    offset = AMOUNT_OFFSET,
+                    width = AMOUNT_WIDTH,
+                    justify = "CENTER",
+                },
+                {
+                    text =
+                        GetLocalization().REQUESTS_STOCK,
+                    offset = STOCK_OFFSET,
+                    width = STOCK_WIDTH,
+                    justify = "CENTER",
+                },
+                {
+                    text =
+                        GetLocalization().REQUESTS_REQUESTED_BY,
+                    offset = REQUESTER_OFFSET,
+                    width = NAME_WIDTH,
+                },
+            }
+        )
+
+    RequestsUI.openColumnHeader:SetPoint(
+        "TOPLEFT",
+        RequestsUI.openHeader,
+        "BOTTOMLEFT",
+        0,
+        0
+    )
+
+    RequestsUI.openColumnHeader:SetPoint(
+        "TOPRIGHT",
+        RequestsUI.openHeader,
+        "BOTTOMRIGHT",
+        0,
+        0
+    )
+
     RequestsUI.openContainer =
         CreateFrame(
             "Frame",
@@ -310,14 +447,18 @@ function RequestsUI.Initialize(
 
     RequestsUI.openContainer:SetPoint(
         "TOPLEFT",
+        RequestsUI.openColumnHeader,
+        "BOTTOMLEFT",
         0,
-        -HEADER_HEIGHT
+        0
     )
 
     RequestsUI.openContainer:SetPoint(
         "TOPRIGHT",
+        RequestsUI.openColumnHeader,
+        "BOTTOMRIGHT",
         0,
-        -HEADER_HEIGHT
+        0
     )
 
     RequestsUI.openRows = {}
@@ -340,10 +481,51 @@ function RequestsUI.Initialize(
         -10
     )
 
+    --
+    -- In Progress
+    --
+
     RequestsUI.progressHeader =
         CreateSectionHeader(
             frame,
             GetLocalization().REQUESTS_IN_PROGRESS
+        )
+
+    RequestsUI.progressColumnHeader =
+        CreateColumnHeader(
+            frame,
+            {
+                {
+                    text = "",
+                    offset = ICON_OFFSET,
+                    width = 40,
+                },
+                {
+                    text =
+                        GetLocalization().REQUESTS_ITEM,
+                    offset = ITEM_OFFSET,
+                    width = ITEM_WIDTH,
+                },
+                {
+                    text =
+                        GetLocalization().REQUESTS_AMOUNT,
+                    offset = AMOUNT_OFFSET,
+                    width = AMOUNT_WIDTH,
+                    justify = "CENTER",
+                },
+                {
+                    text =
+                        GetLocalization().REQUESTS_BANK_CHAR,
+                    offset = BANK_CHAR_OFFSET,
+                    width = NAME_WIDTH,
+                },
+                {
+                    text =
+                        GetLocalization().REQUESTS_REQUESTED_BY,
+                    offset = REQUESTER_OFFSET,
+                    width = NAME_WIDTH,
+                },
+            }
         )
 
     RequestsUI.progressContainer =
@@ -427,13 +609,6 @@ function RequestsUI.Refresh()
     local openRequests = {}
     local progressRequests = {}
 
-    local canViewProgress =
-        permissions.CanViewInProgressRequests
-        and permissions.CanViewInProgressRequests()
-
-    local currentPlayer =
-        GBM.WoW.GetFullPlayerName()
-
     for _, request in ipairs(
         allRequests
     ) do
@@ -449,22 +624,10 @@ function RequestsUI.Refresh()
         elseif request.status
             == "in_progress" then
 
-            if canViewProgress then
-
-                progressRequests[
-                    #progressRequests + 1
-                ] =
-                    request
-
-            elseif request.acceptedBy
-                == currentPlayer then
-
-                progressRequests[
-                    #progressRequests + 1
-                ] =
-                    request
-
-            end
+            progressRequests[
+                #progressRequests + 1
+            ] =
+                request
 
         end
 
@@ -506,44 +669,39 @@ function RequestsUI.Refresh()
 
     end
 
-    RequestsUI.openContainer:SetHeight(
+    local openHeight =
         math.max(
             1,
             openCount * ROW_HEIGHT
         )
+
+    RequestsUI.openContainer:SetHeight(
+        openHeight
     )
+
+    local progressHeaderOffset =
+        SECTION_HEADER_HEIGHT
+        + COLUMN_HEADER_HEIGHT
+        + openHeight
+        + SECTION_GAP
 
     RequestsUI.progressHeader:SetPoint(
         "TOPLEFT",
-        frame,
+        RequestsUI.frame,
         "TOPLEFT",
         0,
-        -(
-            HEADER_HEIGHT
-            + math.max(
-                1,
-                openCount * ROW_HEIGHT
-            )
-            + SECTION_GAP
-        )
+        -progressHeaderOffset
     )
 
     RequestsUI.progressHeader:SetPoint(
         "TOPRIGHT",
-        frame,
+        RequestsUI.frame,
         "TOPRIGHT",
         0,
-        -(
-            HEADER_HEIGHT
-            + math.max(
-                1,
-                openCount * ROW_HEIGHT
-            )
-            + SECTION_GAP
-        )
+        -progressHeaderOffset
     )
 
-    RequestsUI.progressContainer:SetPoint(
+    RequestsUI.progressColumnHeader:SetPoint(
         "TOPLEFT",
         RequestsUI.progressHeader,
         "BOTTOMLEFT",
@@ -551,9 +709,25 @@ function RequestsUI.Refresh()
         0
     )
 
-    RequestsUI.progressContainer:SetPoint(
+    RequestsUI.progressColumnHeader:SetPoint(
         "TOPRIGHT",
         RequestsUI.progressHeader,
+        "BOTTOMRIGHT",
+        0,
+        0
+    )
+
+    RequestsUI.progressContainer:SetPoint(
+        "TOPLEFT",
+        RequestsUI.progressColumnHeader,
+        "BOTTOMLEFT",
+        0,
+        0
+    )
+
+    RequestsUI.progressContainer:SetPoint(
+        "TOPRIGHT",
+        RequestsUI.progressColumnHeader,
         "BOTTOMRIGHT",
         0,
         0
@@ -612,11 +786,11 @@ function RequestsUI.ShowRejectDialog(
                 popup
             )
 
-                popup.editBox:SetText(
+                popup.EditBox:SetText(
                     ""
                 )
 
-                popup.editBox:SetFocus()
+                popup.EditBox:SetFocus()
 
             end,
 
@@ -625,7 +799,7 @@ function RequestsUI.ShowRejectDialog(
             )
 
                 local reasonText =
-                    popup.editBox:GetText()
+                    popup.EditBox:GetText()
 
                 reasonText =
                     string.gsub(

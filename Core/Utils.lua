@@ -28,3 +28,57 @@ function Utils.GetClassColor(class)
 
     return color.r, color.g, color.b
 end
+
+function Utils.GetGuildMember(
+    fullName
+)
+
+    if not fullName then
+        return nil
+    end
+
+    local db =
+        GBM.GuildDB.Get()
+
+    if not db
+        or not db.members then
+
+        return nil
+
+    end
+
+    return db.members[fullName]
+
+end
+
+function Utils.GetShortName(
+    fullName
+)
+
+    if not fullName then
+        return ""
+    end
+
+    return string.match(
+        fullName,
+        "^[^-]+"
+    ) or fullName
+
+end
+
+function Utils.GetGuildMemberClass(
+    fullName
+)
+
+    local member =
+        Utils.GetGuildMember(
+            fullName
+        )
+
+    if not member then
+        return nil
+    end
+
+    return member.class
+
+end

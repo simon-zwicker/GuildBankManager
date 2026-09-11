@@ -49,17 +49,6 @@ local function CreateMainFrame()
         frame.StopMovingOrSizing
     )
 
-    frame:SetScript(
-        "OnHide",
-        function()
-
-            if UI.Tabs then
-                UI.Tabs:Hide()
-            end
-
-        end
-    )
-
     frame.TitleText:SetText(
         L.ADDON_NAME
     )
@@ -112,7 +101,6 @@ local function CreateViews()
 
         "bank",
         "requests",
-        "statistics",
         "usage",
         "settings",
 
@@ -260,7 +248,6 @@ local function CanShowView(
 )
 
     if viewName == "bank"
-        or viewName == "statistics"
         or viewName == "usage" then
 
         return true
@@ -353,11 +340,6 @@ local function CreateTabs(
                 },
 
                 {
-                    id = "statistics",
-                    text = L.STATISTICS,
-                },
-
-                {
                     id = "usage",
                     text = L.USAGE,
                 },
@@ -427,6 +409,8 @@ local function CreateTabs(
                 tab:Show()
 
             end
+
+            tabs:Show()
 
         end
 
@@ -556,15 +540,6 @@ function UI.Initialize()
 
     end
 
-    if UI.Statistics
-        and UI.Statistics.Initialize then
-
-        UI.Statistics.Initialize(
-            UI.Views.statistics
-        )
-
-    end
-
     if UI.Usage
         and UI.Usage.Initialize then
 
@@ -583,9 +558,6 @@ function UI.Initialize()
 
         requests =
             UI.Requests,
-
-        statistics =
-            UI.Statistics,
 
         usage =
             UI.Usage,
@@ -632,6 +604,10 @@ function UI.Toggle()
         end
 
         UI.MainFrame:Show()
+
+        if UI.Tabs then
+            UI.Tabs:Show()
+        end
 
         UI.ShowView(
             activeView

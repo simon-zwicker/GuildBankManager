@@ -171,9 +171,6 @@ local ENGLISH = {
     BANK_CHARS_DESCRIPTION =
         "Manage the characters registered as bank characters.",
 
-    RESET_BANK_CHARS =
-        "Reset Bank Characters",
-
     BANK_CHAR_STATUS =
         "Bank character: %s",
 
@@ -217,10 +214,19 @@ local ENGLISH = {
         "Item",
 
     REQUESTS_AMOUNT =
-        "Request",
+        "Amount",
 
     REQUESTS_OWN_AMOUNT =
         "Own",
+
+    REQUESTS_STOCK =
+        "Stock",
+
+    REQUESTS_BANK_CHAR =
+        "Bank Character",
+
+    REQUESTS_REQUESTED_BY =
+        "Requested By",
 
     REQUESTS_OPEN =
         "Requests",
@@ -310,13 +316,15 @@ local ENGLISH = {
         "  Revision: %d",
 
     COMMAND_TOGGLE =
-    "/gbm - Toggle Guild Bank Manager",
+        "/gbm - Toggle Guild Bank Manager",
 
     COMMAND_HELP =
         "/gbm help - Show available commands",
 
     REQUEST_CANCEL_CONFIRM =
         "Are you sure you want to cancel this request?\n\n%d x %s",
+
+    REQUESTS_UNKNOWN_ITEM = "Item %d",
 
 }
 

@@ -20,6 +20,19 @@ local DEFAULT_DATABASE = {
     },
 }
 
+local function IsRequestReservingStock(
+    request
+)
+
+    if not request then
+        return false
+    end
+
+    return request.status == "reserved"
+        or request.status == "in_progress"
+
+end
+
 function BankDB.Initialize()
 
     if not GBM.Utils.IsTable(
@@ -300,7 +313,7 @@ function BankDB.GetReservedAmount(
 
         if request.acceptedBy == fullName
             and request.itemID == itemID
-            and request.status == "reserved" then
+            and IsRequestReservingStock(request) then
 
             reserved =
                 reserved
@@ -393,7 +406,7 @@ function BankDB.GetTotalReservedAmount(
     ) do
 
         if request.itemID == itemID
-            and request.status == "reserved" then
+            and IsRequestReservingStock(request) then
 
             reserved =
                 reserved

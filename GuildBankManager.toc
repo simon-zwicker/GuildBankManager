@@ -39,7 +39,6 @@ UI\Bank\BankScanner.lua
 UI\Requests\InProgressRow.lua
 UI\Requests\RequestRow.lua
 UI\Requests\Requests.lua
-UI\Statistics.lua
 UI\Usage.lua
 
 UI\Settings\Permissions.lua

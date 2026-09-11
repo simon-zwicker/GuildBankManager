@@ -8,6 +8,18 @@ local RequestsUI = GBM.UI.Requests
 local ROW_HEIGHT = 42
 local ICON_SIZE = 32
 
+local ITEM_OFFSET = 50
+local ITEM_WIDTH = 220
+
+local AMOUNT_OFFSET = 280
+local AMOUNT_WIDTH = 70
+
+local BANK_CHAR_OFFSET = 355
+local BANK_CHAR_WIDTH = 150
+
+local REQUESTER_OFFSET = 510
+local REQUESTER_WIDTH = 150
+
 local function CreateButton(
     parent,
     texture
@@ -76,6 +88,187 @@ local function GetItemData(
 
 end
 
+local function GetShortName(
+    fullName
+)
+
+    if not fullName then
+        return ""
+    end
+
+    return string.match(
+        fullName,
+        "^[^-]+"
+    ) or fullName
+
+end
+
+local function GetMember(
+    fullName
+)
+
+    if not fullName then
+        return nil
+    end
+
+    local db =
+        GBM.GuildDB.Get()
+
+    if not db
+        or not db.members then
+
+        return nil
+
+    end
+
+    local member =
+        db.members[
+            fullName
+        ]
+
+    if member then
+        return member
+    end
+
+    local shortName =
+        GetShortName(
+            fullName
+        )
+
+    return db.members[
+        shortName
+    ]
+
+end
+
+local function SetClassColoredName(
+    fontString,
+    fullName
+)
+
+    local shortName =
+        GetShortName(
+            fullName
+        )
+
+    local member =
+        GetMember(
+            fullName
+        )
+
+    local r,
+        g,
+        b =
+        GBM.Utils.GetClassColor(
+            member
+            and member.class
+        )
+
+    fontString:SetText(
+        shortName
+    )
+
+    fontString:SetTextColor(
+        r,
+        g,
+        b
+    )
+
+end
+
+local function ApplyItemQualityColor(
+    fontString,
+    quality
+)
+
+    if not quality then
+
+        fontString:SetTextColor(
+            1,
+            1,
+            1
+        )
+
+        return
+
+    end
+
+    local r,
+        g,
+        b =
+        GetItemQualityColor(
+            quality
+        )
+
+    if not r then
+
+        r,
+        g,
+        b =
+            1,
+            1,
+            1
+
+    end
+
+    fontString:SetTextColor(
+        r,
+        g,
+        b
+    )
+
+end
+
+local function SetupItemTooltip(
+    frame,
+    itemID
+)
+
+    frame:SetScript(
+        "OnEnter",
+        function(self)
+
+            GameTooltip:SetOwner(
+                self,
+                "ANCHOR_RIGHT"
+            )
+
+            local itemInfo =
+                GetItemData(
+                    itemID
+                )
+
+            if itemInfo
+                and itemInfo.link then
+
+                GameTooltip:SetHyperlink(
+                    itemInfo.link
+                )
+
+            else
+
+                GameTooltip:SetItemByID(
+                    itemID
+                )
+
+            end
+
+            GameTooltip:Show()
+
+        end
+    )
+
+    frame:SetScript(
+        "OnLeave",
+        function()
+
+            GameTooltip:Hide()
+
+        end
+    )
+
+end
+
 local function IsOwner(
     request
 )
@@ -126,8 +319,10 @@ function RequestsUI.CreateInProgressRow(
     row:SetBackdrop({
         bgFile =
             "Interface\\Tooltips\\UI-Tooltip-Background",
+
         edgeFile =
             "Interface\\Tooltips\\UI-Tooltip-Border",
+
         edgeSize = 1,
     })
 
@@ -155,17 +350,6 @@ function RequestsUI.CreateInProgressRow(
         0
     )
 
-    local itemInfo =
-        GetItemData(
-            request.itemID
-        )
-
-    row.icon:SetTexture(
-        itemInfo
-        and itemInfo.texture
-        or "Interface\\Icons\\INV_Misc_QuestionMark"
-    )
-
     row.itemName =
         row:CreateFontString(
             nil,
@@ -175,29 +359,43 @@ function RequestsUI.CreateInProgressRow(
 
     row.itemName:SetPoint(
         "LEFT",
-        row.icon,
-        "RIGHT",
-        8,
+        ITEM_OFFSET,
         0
     )
 
     row.itemName:SetWidth(
-        220
+        ITEM_WIDTH
     )
 
     row.itemName:SetJustifyH(
         "LEFT"
     )
 
-    row.itemName:SetText(
-        itemInfo
-        and itemInfo.name
-        or (
-            "Item "
-            .. tostring(
-                request.itemID
-            )
+    row.itemTooltip =
+        CreateFrame(
+            "Frame",
+            nil,
+            row
         )
+
+    row.itemTooltip:SetPoint(
+        "LEFT",
+        5,
+        0
+    )
+
+    row.itemTooltip:SetSize(
+        ITEM_WIDTH + 40,
+        ROW_HEIGHT
+    )
+
+    row.itemTooltip:EnableMouse(
+        true
+    )
+
+    SetupItemTooltip(
+        row.itemTooltip,
+        request.itemID
     )
 
     row.amount =
@@ -207,27 +405,18 @@ function RequestsUI.CreateInProgressRow(
             "GameFontNormal"
         )
 
-    row.amount:SetWidth(
-        70
-    )
-
     row.amount:SetPoint(
         "LEFT",
-        row.itemName,
-        "RIGHT",
-        10,
+        AMOUNT_OFFSET,
         0
+    )
+
+    row.amount:SetWidth(
+        AMOUNT_WIDTH
     )
 
     row.amount:SetJustifyH(
         "CENTER"
-    )
-
-    row.amount:SetText(
-        tostring(
-            request.amount
-            or 0
-        )
     )
 
     row.acceptedBy =
@@ -239,31 +428,43 @@ function RequestsUI.CreateInProgressRow(
 
     row.acceptedBy:SetPoint(
         "LEFT",
-        row.amount,
-        "RIGHT",
-        5,
+        BANK_CHAR_OFFSET,
         0
     )
 
     row.acceptedBy:SetWidth(
-        150
+        BANK_CHAR_WIDTH
     )
 
     row.acceptedBy:SetJustifyH(
         "LEFT"
     )
 
-    row.acceptedBy:SetText(
-        request.acceptedBy
-        or ""
+    row.requestedBy =
+        row:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormal"
+        )
+
+    row.requestedBy:SetPoint(
+        "LEFT",
+        REQUESTER_OFFSET,
+        0
     )
 
-    -- Fulfill / Package
+    row.requestedBy:SetWidth(
+        REQUESTER_WIDTH
+    )
+
+    row.requestedBy:SetJustifyH(
+        "LEFT"
+    )
 
     row.fulfillButton =
         CreateButton(
             row,
-            "Interface\\Buttons\\UI-GroupLoot-Dice-Up"
+            "Interface\\Icons\\INV_Misc_Bag_08"
         )
 
     row.fulfillButton:SetPoint(
@@ -284,22 +485,35 @@ function RequestsUI.CreateInProgressRow(
 
             end
 
+            if not GBM.Permissions
+                or not GBM.Permissions.IsBankChar
+                or not GBM.Permissions.IsBankChar() then
+
+                return
+
+            end
+
             local success =
                 GBM.Requests.Fulfill(
                     request.id,
                     request.acceptedBy
                 )
 
-            if success then
+            if not success then
+                return
+            end
 
-                RequestsUI.Refresh()
+            RequestsUI.Refresh()
+
+            if GBM.Bank
+                and GBM.Bank.Sync then
+
+                GBM.Bank.Sync()
 
             end
 
         end
     )
-
-    -- Reopen
 
     row.reopenButton =
         CreateButton(
@@ -333,26 +547,32 @@ function RequestsUI.CreateInProgressRow(
 
     function row:Refresh()
 
-        local currentItemInfo =
+        local itemInfo =
             GetItemData(
                 request.itemID
             )
 
         self.icon:SetTexture(
-            currentItemInfo
-            and currentItemInfo.texture
+            itemInfo
+            and itemInfo.texture
             or "Interface\\Icons\\INV_Misc_QuestionMark"
         )
 
         self.itemName:SetText(
-            currentItemInfo
-            and currentItemInfo.name
+            itemInfo
+            and itemInfo.name
             or (
                 "Item "
                 .. tostring(
                     request.itemID
                 )
             )
+        )
+
+        ApplyItemQualityColor(
+            self.itemName,
+            itemInfo
+            and itemInfo.quality
         )
 
         self.amount:SetText(
@@ -362,9 +582,14 @@ function RequestsUI.CreateInProgressRow(
             )
         )
 
-        self.acceptedBy:SetText(
+        SetClassColoredName(
+            self.acceptedBy,
             request.acceptedBy
-            or ""
+        )
+
+        SetClassColoredName(
+            self.requestedBy,
+            request.requestedBy
         )
 
         self.fulfillButton:Hide()

@@ -4,6 +4,58 @@ GBM.WoW = {}
 
 local WoW = GBM.WoW
 
+local function GetClassToken(
+    localizedClass
+)
+
+    if not localizedClass then
+        return nil
+    end
+
+    if RAID_CLASS_COLORS[
+        localizedClass
+    ] then
+
+        return localizedClass
+
+    end
+
+    if LOCALIZED_CLASS_NAMES_MALE then
+
+        for classToken, className in pairs(
+            LOCALIZED_CLASS_NAMES_MALE
+        ) do
+
+            if className == localizedClass then
+
+                return classToken
+
+            end
+
+        end
+
+    end
+
+    if LOCALIZED_CLASS_NAMES_FEMALE then
+
+        for classToken, className in pairs(
+            LOCALIZED_CLASS_NAMES_FEMALE
+        ) do
+
+            if className == localizedClass then
+
+                return classToken
+
+            end
+
+        end
+
+    end
+
+    return nil
+
+end
+
 function WoW.GetPlayerName()
 
     return UnitName(
@@ -92,7 +144,9 @@ function WoW.GetGuildMemberInfo(
         rank = rankName,
         rankIndex = rankIndex,
         level = level,
-        class = class,
+        class = GetClassToken(
+            class
+        ),
         online = isOnline,
     }
 

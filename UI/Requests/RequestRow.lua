@@ -8,6 +8,18 @@ local RequestsUI = GBM.UI.Requests
 local ROW_HEIGHT = 42
 local ICON_SIZE = 32
 
+local ITEM_OFFSET = 50
+local ITEM_WIDTH = 220
+
+local AMOUNT_OFFSET = 280
+local AMOUNT_WIDTH = 70
+
+local STOCK_OFFSET = 355
+local STOCK_WIDTH = 70
+
+local REQUESTER_OFFSET = 435
+local REQUESTER_WIDTH = 150
+
 local function CreateButton(
     parent,
     texture
@@ -68,12 +80,10 @@ local function GetItemData(
         )
 
     return {
-
         name = itemName,
         link = itemLink,
         quality = itemQuality,
         texture = itemTexture,
-
     }
 
 end
@@ -107,6 +117,187 @@ local function GetOwnAmount(
     end
 
     return 0
+
+end
+
+local function GetShortName(
+    fullName
+)
+
+    if not fullName then
+        return ""
+    end
+
+    return string.match(
+        fullName,
+        "^[^-]+"
+    ) or fullName
+
+end
+
+local function GetMember(
+    fullName
+)
+
+    if not fullName then
+        return nil
+    end
+
+    local db =
+        GBM.GuildDB.Get()
+
+    if not db
+        or not db.members then
+
+        return nil
+
+    end
+
+    local member =
+        db.members[
+            fullName
+        ]
+
+    if member then
+        return member
+    end
+
+    local shortName =
+        GetShortName(
+            fullName
+        )
+
+    return db.members[
+        shortName
+    ]
+
+end
+
+local function SetClassColoredName(
+    fontString,
+    fullName
+)
+
+    local shortName =
+        GetShortName(
+            fullName
+        )
+
+    local member =
+        GetMember(
+            fullName
+        )
+
+    local r,
+        g,
+        b =
+        GBM.Utils.GetClassColor(
+            member
+            and member.class
+        )
+
+    fontString:SetText(
+        shortName
+    )
+
+    fontString:SetTextColor(
+        r,
+        g,
+        b
+    )
+
+end
+
+local function ApplyItemQualityColor(
+    fontString,
+    quality
+)
+
+    if not quality then
+
+        fontString:SetTextColor(
+            1,
+            1,
+            1
+        )
+
+        return
+
+    end
+
+    local r,
+        g,
+        b =
+        GetItemQualityColor(
+            quality
+        )
+
+    if not r then
+
+        r,
+        g,
+        b =
+            1,
+            1,
+            1
+
+    end
+
+    fontString:SetTextColor(
+        r,
+        g,
+        b
+    )
+
+end
+
+local function SetupItemTooltip(
+    frame,
+    itemID
+)
+
+    frame:SetScript(
+        "OnEnter",
+        function(self)
+
+            GameTooltip:SetOwner(
+                self,
+                "ANCHOR_RIGHT"
+            )
+
+            local itemInfo =
+                GetItemData(
+                    itemID
+                )
+
+            if itemInfo
+                and itemInfo.link then
+
+                GameTooltip:SetHyperlink(
+                    itemInfo.link
+                )
+
+            else
+
+                GameTooltip:SetItemByID(
+                    itemID
+                )
+
+            end
+
+            GameTooltip:Show()
+
+        end
+    )
+
+    frame:SetScript(
+        "OnLeave",
+        function()
+
+            GameTooltip:Hide()
+
+        end
+    )
 
 end
 
@@ -242,13 +433,10 @@ local function ShowBankCharMenu(
         return
     end
 
-    local menuName =
-        "GBMRequestBankCharDropdown"
-
     local menu =
         CreateFrame(
             "Frame",
-            menuName,
+            "GBMRequestBankCharDropdown",
             UIParent,
             "UIDropDownMenuTemplate"
         )
@@ -268,7 +456,9 @@ local function ShowBankCharMenu(
                     UIDropDownMenu_CreateInfo()
 
                 info.text =
-                    bankChar
+                    GetShortName(
+                        bankChar
+                    )
 
                 info.func =
                     function()
@@ -370,11 +560,20 @@ local function ShowCancelConfirmation(
 
             preferredIndex = 3,
 
-            OnAccept = function()
+            OnAccept = function(
+                popup
+            )
+
+                local currentRequest =
+                    popup.request
+
+                if not currentRequest then
+                    return
+                end
 
                 local success =
                     GBM.Requests.Cancel(
-                        request.id
+                        currentRequest.id
                     )
 
                 if success then
@@ -383,17 +582,37 @@ local function ShowCancelConfirmation(
 
                 end
 
+                popup.request =
+                    nil
+
+            end,
+
+            OnHide = function(
+                popup
+            )
+
+                popup.request =
+                    nil
+
             end,
 
         }
 
     end
 
-    StaticPopup_Show(
-        dialogName,
-        request.amount or 0,
-        request.itemName or "?"
-    )
+    local popup =
+        StaticPopup_Show(
+            dialogName,
+            request.amount or 0,
+            request.itemName or "?"
+        )
+
+    if popup then
+
+        popup.request =
+            request
+
+    end
 
 end
 
@@ -420,8 +639,10 @@ function RequestsUI.CreateRequestRow(
     row:SetBackdrop({
         bgFile =
             "Interface\\Tooltips\\UI-Tooltip-Background",
+
         edgeFile =
             "Interface\\Tooltips\\UI-Tooltip-Border",
+
         edgeSize = 1,
     })
 
@@ -449,17 +670,6 @@ function RequestsUI.CreateRequestRow(
         0
     )
 
-    local itemInfo =
-        GetItemData(
-            request.itemID
-        )
-
-    row.icon:SetTexture(
-        itemInfo
-        and itemInfo.texture
-        or "Interface\\Icons\\INV_Misc_QuestionMark"
-    )
-
     row.itemName =
         row:CreateFontString(
             nil,
@@ -469,29 +679,43 @@ function RequestsUI.CreateRequestRow(
 
     row.itemName:SetPoint(
         "LEFT",
-        row.icon,
-        "RIGHT",
-        8,
+        ITEM_OFFSET,
         0
     )
 
     row.itemName:SetWidth(
-        220
+        ITEM_WIDTH
     )
 
     row.itemName:SetJustifyH(
         "LEFT"
     )
 
-    row.itemName:SetText(
-        itemInfo
-        and itemInfo.name
-        or (
-            "Item "
-            .. tostring(
-                request.itemID
-            )
+    row.itemTooltip =
+        CreateFrame(
+            "Frame",
+            nil,
+            row
         )
+
+    row.itemTooltip:SetPoint(
+        "LEFT",
+        5,
+        0
+    )
+
+    row.itemTooltip:SetSize(
+        ITEM_WIDTH + 40,
+        ROW_HEIGHT
+    )
+
+    row.itemTooltip:EnableMouse(
+        true
+    )
+
+    SetupItemTooltip(
+        row.itemTooltip,
+        request.itemID
     )
 
     row.requestAmount =
@@ -501,16 +725,14 @@ function RequestsUI.CreateRequestRow(
             "GameFontNormal"
         )
 
-    row.requestAmount:SetWidth(
-        70
-    )
-
     row.requestAmount:SetPoint(
         "LEFT",
-        row.itemName,
-        "RIGHT",
-        10,
+        AMOUNT_OFFSET,
         0
+    )
+
+    row.requestAmount:SetWidth(
+        AMOUNT_WIDTH
     )
 
     row.requestAmount:SetJustifyH(
@@ -524,20 +746,39 @@ function RequestsUI.CreateRequestRow(
             "GameFontNormal"
         )
 
-    row.ownAmount:SetWidth(
-        70
-    )
-
     row.ownAmount:SetPoint(
         "LEFT",
-        row.requestAmount,
-        "RIGHT",
-        5,
+        STOCK_OFFSET,
         0
+    )
+
+    row.ownAmount:SetWidth(
+        STOCK_WIDTH
     )
 
     row.ownAmount:SetJustifyH(
         "CENTER"
+    )
+
+    row.requestedBy =
+        row:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormal"
+        )
+
+    row.requestedBy:SetPoint(
+        "LEFT",
+        REQUESTER_OFFSET,
+        0
+    )
+
+    row.requestedBy:SetWidth(
+        REQUESTER_WIDTH
+    )
+
+    row.requestedBy:SetJustifyH(
+        "LEFT"
     )
 
     row.acceptButton =
@@ -634,26 +875,30 @@ function RequestsUI.CreateRequestRow(
 
     function row:Refresh()
 
-        local currentItemInfo =
+        local itemInfo =
             GetItemData(
                 request.itemID
             )
 
         self.icon:SetTexture(
-            currentItemInfo
-            and currentItemInfo.texture
+            itemInfo
+            and itemInfo.texture
             or "Interface\\Icons\\INV_Misc_QuestionMark"
         )
 
         self.itemName:SetText(
-            currentItemInfo
-            and currentItemInfo.name
-            or (
-                "Item "
-                .. tostring(
-                    request.itemID
-                )
+            itemInfo
+            and itemInfo.name
+            or string.format(
+                GBM.L.REQUESTS_UNKNOWN_ITEM,
+                request.itemID
             )
+        )
+
+        ApplyItemQualityColor(
+            self.itemName,
+            itemInfo
+            and itemInfo.quality
         )
 
         self.requestAmount:SetText(
@@ -669,6 +914,11 @@ function RequestsUI.CreateRequestRow(
                     request
                 )
             )
+        )
+
+        SetClassColoredName(
+            self.requestedBy,
+            request.requestedBy
         )
 
         local open =
@@ -704,203 +954,6 @@ function RequestsUI.CreateRequestRow(
             self.cancelButton:Show()
 
         end
-
-    end
-
-    row:Refresh()
-
-    return row
-
-end
-
-function RequestsUI.CreateInProgressRow(
-    parent,
-    request
-)
-
-    local row =
-        CreateFrame(
-            "Frame",
-            nil,
-            parent,
-            "BackdropTemplate"
-        )
-
-    row:SetHeight(
-        ROW_HEIGHT
-    )
-
-    row.request =
-        request
-
-    row:SetBackdrop({
-        bgFile =
-            "Interface\\Tooltips\\UI-Tooltip-Background",
-
-        edgeFile =
-            "Interface\\Tooltips\\UI-Tooltip-Border",
-
-        edgeSize = 1,
-    })
-
-    row:SetBackdropColor(
-        0,
-        0,
-        0,
-        0.20
-    )
-
-    row.icon =
-        row:CreateTexture(
-            nil,
-            "ARTWORK"
-        )
-
-    row.icon:SetSize(
-        ICON_SIZE,
-        ICON_SIZE
-    )
-
-    row.icon:SetPoint(
-        "LEFT",
-        5,
-        0
-    )
-
-    local itemInfo =
-        GetItemData(
-            request.itemID
-        )
-
-    row.icon:SetTexture(
-        itemInfo
-        and itemInfo.texture
-        or "Interface\\Icons\\INV_Misc_QuestionMark"
-    )
-
-    row.itemName =
-        row:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontNormal"
-        )
-
-    row.itemName:SetPoint(
-        "LEFT",
-        row.icon,
-        "RIGHT",
-        8,
-        0
-    )
-
-    row.itemName:SetWidth(
-        220
-    )
-
-    row.itemName:SetJustifyH(
-        "LEFT"
-    )
-
-    row.itemName:SetText(
-        itemInfo
-        and itemInfo.name
-        or (
-            "Item "
-            .. tostring(
-                request.itemID
-            )
-        )
-    )
-
-    row.amount =
-        row:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontNormal"
-        )
-
-    row.amount:SetWidth(
-        70
-    )
-
-    row.amount:SetPoint(
-        "LEFT",
-        row.itemName,
-        "RIGHT",
-        10,
-        0
-    )
-
-    row.amount:SetJustifyH(
-        "CENTER"
-    )
-
-    row.amount:SetText(
-        tostring(
-            request.amount
-            or 0
-        )
-    )
-
-    row.acceptedBy =
-        row:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontNormal"
-        )
-
-    row.acceptedBy:SetPoint(
-        "LEFT",
-        row.amount,
-        "RIGHT",
-        15,
-        0
-    )
-
-    row.acceptedBy:SetJustifyH(
-        "LEFT"
-    )
-
-    row.acceptedBy:SetText(
-        request.acceptedBy
-        or "-"
-    )
-
-    function row:Refresh()
-
-        local currentItemInfo =
-            GetItemData(
-                request.itemID
-            )
-
-        self.icon:SetTexture(
-            currentItemInfo
-            and currentItemInfo.texture
-            or "Interface\\Icons\\INV_Misc_QuestionMark"
-        )
-
-        self.itemName:SetText(
-            currentItemInfo
-            and currentItemInfo.name
-            or (
-                "Item "
-                .. tostring(
-                    request.itemID
-                )
-            )
-        )
-
-        self.amount:SetText(
-            tostring(
-                request.amount
-                or 0
-            )
-        )
-
-        self.acceptedBy:SetText(
-            request.acceptedBy
-            or "-"
-        )
 
     end
 

@@ -38,6 +38,8 @@
         "UIDropDownMenu_EnableDropDown",
         "ToggleDropDownMenu",
         "YES",
-        "NO"
+        "NO",
+        "LOCALIZED_CLASS_NAMES_MALE",
+        "LOCALIZED_CLASS_NAMES_FEMALE"
     ]
 }

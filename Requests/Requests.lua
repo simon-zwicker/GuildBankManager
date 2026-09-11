@@ -751,19 +751,6 @@ function Requests.CanFulfill(
 
     end
 
-    local available =
-        GBM.BankDB.GetAvailableAmount(
-            bankChar,
-            request.itemID
-        )
-
-    if available < request.amount then
-
-        return false,
-            "insufficient_stock"
-
-    end
-
     if bankChar
         ~= GetPlayerFullName() then
 
