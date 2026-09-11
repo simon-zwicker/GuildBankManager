@@ -93,9 +93,7 @@ local function ScanContainer(
 
             statistics.itemCount =
                 statistics.itemCount + quantity
-
         end
-
     end
 
     return true
@@ -115,6 +113,7 @@ local function ScanBank()
     }
 
     -- Hauptbank
+
     ScanContainer(
         BANK_CONTAINER,
         items,
@@ -145,9 +144,7 @@ local function ScanBank()
 
             statistics.bankBags =
                 statistics.bankBags + 1
-
         end
-
     end
 
     return items, statistics
@@ -167,6 +164,7 @@ local function ScanInventory()
     }
 
     -- Rucksack
+
     ScanContainer(
         0,
         items,
@@ -196,9 +194,7 @@ local function ScanInventory()
 
             statistics.bags =
                 statistics.bags + 1
-
         end
-
     end
 
     return items, statistics
@@ -220,7 +216,6 @@ local function MergeItems(
             itemID,
             amount
         )
-
     end
 
     for itemID, amount in pairs(
@@ -232,7 +227,6 @@ local function MergeItems(
             itemID,
             amount
         )
-
     end
 
     return items
@@ -254,7 +248,6 @@ local function CountItems(
 
         itemCount =
             itemCount + amount
-
     end
 
     return itemTypes, itemCount
@@ -380,7 +373,19 @@ function BankScanner.Sync()
     BankScanner.RebuildItemIndex()
 
     if GBM.UI.Bank then
+
         GBM.UI.Bank.Refresh()
+
+    end
+
+    -- Synchronisiert den vollständig aktualisierten
+    -- lokalen Datenstand mit den anderen GBM-Clients.
+    if GBM.Sync
+        and GBM.Sync.Comm
+        and GBM.Sync.Comm.MarkChanged then
+
+        GBM.Sync.Comm.MarkChanged()
+
     end
 
     local bankItemTypes,
@@ -502,9 +507,7 @@ function BankScanner.RebuildItemIndex()
                 items[itemID] = true
 
             end
-
         end
-
     end
 
     db.items = items

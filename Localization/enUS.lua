@@ -87,6 +87,33 @@ local ENGLISH = {
 
     REQUEST_AMOUNT_ERROR = "You should choose an amount\nbetween %d and %d.",
 
+    PERMISSIONS =
+        "Permissions",
+
+    PERMISSIONS_DESCRIPTION =
+        "Set the minimum guild rank required to use each function.",
+
+    PERMISSION_MANAGE_REQUESTS =
+        "Manage Requests",
+
+    PERMISSION_ASSIGN_REQUESTS =
+        "Assign Requests",
+
+    PERMISSION_REJECT_REQUESTS =
+        "Reject Requests",
+
+    PERMISSION_MANAGE_BANK_CHARS =
+        "Manage Bank Characters",
+
+    PERMISSION_SYNC_BANK =
+        "Synchronize Bank",
+
+    BANK_CHARS_DESCRIPTION =
+        "Manage the characters registered as bank characters.",
+
+    RESET_BANK_CHARS =
+        "Reset Bank Characters",
+
 }
 
 local function ApplyLocale(

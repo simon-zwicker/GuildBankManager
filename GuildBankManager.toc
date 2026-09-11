@@ -6,7 +6,9 @@
 ## SavedVariables: GuildBankManager_GuildDB, GuildBankManager_BankDB
 
 Core\Init.lua
+
 Localization\enUS.lua
+
 Core\Utils.lua
 Core\WoWAPI.lua
 
@@ -14,8 +16,13 @@ Database\GuildDB.lua
 Database\BankDB.lua
 
 Guild\Guild.lua
+Guild\Permissions.lua
 Guild\Members.lua
 Guild\BankChars.lua
+
+Sync\Serializer.lua
+Sync\Protocol.lua
+Sync\Comm.lua
 
 Requests\Requests.lua
 
@@ -32,6 +39,8 @@ UI\Bank\BankScanner.lua
 UI\Requests.lua
 UI\Statistics.lua
 UI\Usage.lua
+
+UI\Settings\Permissions.lua
 UI\Settings\Settings.lua
 UI\Settings\AddChar.lua
 

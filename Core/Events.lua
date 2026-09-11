@@ -30,10 +30,24 @@ local function OnAddonLoaded(
     GBM.BankDB.Initialize()
     GBM.Commands.Initialize()
 
+    GBM.Permissions.Initialize()
+
     GBM.Guild.Initialize()
+
+    GBM.Sync.Comm.Initialize()
+
     GBM.WoW.RequestGuildRoster()
 
     GBM.UI.Initialize()
+
+    C_Timer.After(
+        2,
+        function()
+
+            GBM.Sync.Comm.Hello()
+
+        end
+    )
 
     frame:UnregisterEvent(
         "ADDON_LOADED"
@@ -41,6 +55,10 @@ local function OnAddonLoaded(
 
     frame:RegisterEvent(
         "GUILD_ROSTER_UPDATE"
+    )
+
+    frame:RegisterEvent(
+        "CHAT_MSG_ADDON"
     )
 
     frame:RegisterEvent(
@@ -64,6 +82,18 @@ end
 local function OnGuildRosterUpdate()
 
     GBM.Guild.UpdateMembers()
+
+end
+
+local function OnAddonMessage(
+    event,
+    ...
+)
+
+    GBM.Sync.Comm.OnEvent(
+        event,
+        ...
+    )
 
 end
 
@@ -117,6 +147,13 @@ frame:SetScript(
         elseif event == "GUILD_ROSTER_UPDATE" then
 
             OnGuildRosterUpdate()
+
+        elseif event == "CHAT_MSG_ADDON" then
+
+            OnAddonMessage(
+                event,
+                ...
+            )
 
         elseif event == "BANKFRAME_OPENED" then
 

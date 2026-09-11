@@ -1,16 +1,23 @@
 local GBM = GBM
+
 local UI = GBM.UI
 
 UI.Settings = {}
+
 local Settings = UI.Settings
 
-local function CreateTitle(parent)
+local L = GBM.L
 
-    local title = parent:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormalLarge"
-    )
+local function CreateTitle(
+    parent
+)
+
+    local title =
+        parent:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormalLarge"
+        )
 
     title:SetPoint(
         "TOPLEFT",
@@ -20,18 +27,24 @@ local function CreateTitle(parent)
         -10
     )
 
-    title:SetText("Einstellungen")
+    title:SetText(
+        L.SETTINGS
+    )
 
     return title
+
 end
 
-local function CreateBankCharSection(parent)
+local function CreateBankCharSection(
+    parent
+)
 
-    local title = parent:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-    )
+    local title =
+        parent:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormal"
+        )
 
     title:SetPoint(
         "TOPLEFT",
@@ -41,13 +54,16 @@ local function CreateBankCharSection(parent)
         -50
     )
 
-    title:SetText("Bankchars")
-
-    local description = parent:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontHighlightSmall"
+    title:SetText(
+        L.BANK_CHARS
     )
+
+    local description =
+        parent:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontHighlightSmall"
+        )
 
     description:SetPoint(
         "TOPLEFT",
@@ -58,20 +74,24 @@ local function CreateBankCharSection(parent)
     )
 
     description:SetText(
-        "Verwalte die Charaktere, die als Bankchars registriert sind."
+        L.BANK_CHARS_DESCRIPTION
     )
 
     return title
+
 end
 
-local function CreateAddBankCharButton(parent)
+local function CreateAddBankCharButton(
+    parent
+)
 
-    local button = CreateFrame(
-        "Button",
-        nil,
-        parent,
-        "UIPanelButtonTemplate"
-    )
+    local button =
+        CreateFrame(
+            "Button",
+            nil,
+            parent,
+            "UIPanelButtonTemplate"
+        )
 
     button:SetSize(
         180,
@@ -87,7 +107,7 @@ local function CreateAddBankCharButton(parent)
     )
 
     button:SetText(
-        "Bankchar hinzufügen"
+        L.ADD_BANK_CHAR
     )
 
     button:SetScript(
@@ -95,25 +115,32 @@ local function CreateAddBankCharButton(parent)
         function()
 
             if UI.Settings.ShowAddChar then
+
                 UI.Settings.ShowAddChar()
+
             end
 
         end
     )
 
-    Settings.AddBankCharButton = button
+    Settings.AddBankCharButton =
+        button
 
     return button
+
 end
 
-local function CreateResetBankCharsButton(parent)
+local function CreateResetBankCharsButton(
+    parent
+)
 
-    local button = CreateFrame(
-        "Button",
-        nil,
-        parent,
-        "UIPanelButtonTemplate"
-    )
+    local button =
+        CreateFrame(
+            "Button",
+            nil,
+            parent,
+            "UIPanelButtonTemplate"
+        )
 
     button:SetSize(
         180,
@@ -129,7 +156,7 @@ local function CreateResetBankCharsButton(parent)
     )
 
     button:SetText(
-        "Bankchars zurücksetzen"
+        L.RESET_BANK_CHARS
     )
 
     button:SetScript(
@@ -143,80 +170,172 @@ local function CreateResetBankCharsButton(parent)
         end
     )
 
-    Settings.ResetBankCharsButton = button
+    Settings.ResetBankCharsButton =
+        button
 
     return button
+
 end
 
 local function CreateResetDialog()
 
-    StaticPopupDialogs["GBM_RESET_BANKCHARS"] = {
+    StaticPopupDialogs[
+        "GBM_RESET_BANKCHARS"
+    ] = {
 
-        text = "Möchtest du wirklich alle registrierten Bankchars zurücksetzen?",
+        text =
+            L.RESET_CONFIRMATION,
 
-        button1 = "Zurücksetzen",
-        button2 = "Abbrechen",
+        button1 =
+            L.RESET,
 
-        OnAccept = function()
+        button2 =
+            L.CANCEL,
 
-            local db = GBM.GuildDB.Get()
+        OnAccept =
+            function()
 
-            if not db then
-                return
-            end
+                if not GBM.Permissions
+                    .CanManageBankChars() then
 
-            db.bankChars = {}
+                    return
 
-            print(
-                "|cFF00FF00GBM|r Alle Bankchars wurden zurückgesetzt."
-            )
+                end
 
-            if UI.Settings.Refresh then
-                UI.Settings.Refresh()
-            end
+                local db =
+                    GBM.GuildDB.Get()
 
-        end,
+                if not db then
+                    return
+                end
+
+                db.bankChars = {}
+
+                print(
+                    "|cFF00FF00GBM|r "
+                    .. L.RESET_BANK_CHARS
+                )
+
+                Settings.Refresh()
+
+            end,
 
         timeout = 0,
+
         whileDead = true,
+
         hideOnEscape = true,
+
         preferredIndex = 3,
 
     }
 
 end
 
+local function CreatePermissionsSection(
+    parent
+)
+
+    local frame =
+        CreateFrame(
+            "Frame",
+            nil,
+            parent
+        )
+
+    frame:SetPoint(
+        "TOPLEFT",
+        parent,
+        "TOPLEFT",
+        0,
+        -145
+    )
+
+    frame:SetPoint(
+        "TOPRIGHT",
+        parent,
+        "TOPRIGHT",
+        0,
+        -145
+    )
+
+    frame:SetHeight(
+        300
+    )
+
+    Settings.PermissionsFrame =
+        frame
+
+    if UI.SettingsPermissions then
+
+        UI.SettingsPermissions.Initialize(
+            frame
+        )
+
+    end
+
+    return frame
+
+end
+
 function Settings.ShowAddChar()
 
+    if not GBM.Permissions
+        .CanManageBankChars() then
+
+        return
+
+    end
+
     if GBM.AddCharUI then
+
         GBM.AddCharUI.Show()
+
     end
 
 end
 
 function Settings.Refresh()
 
-    -- Wird später verwendet,
-    -- um die aktuelle Bankchar-Liste
-    -- in den Einstellungen zu aktualisieren.
+    if UI.SettingsPermissions then
+
+        UI.SettingsPermissions.Refresh()
+
+    end
 
 end
 
 function Settings.Initialize()
 
-    local view = UI.Views.settings
+    local view =
+        UI.Views.settings
 
     if not view then
         return
     end
 
-    CreateTitle(view)
-    CreateBankCharSection(view)
+    CreateTitle(
+        view
+    )
 
-    CreateAddBankCharButton(view)
-    CreateResetBankCharsButton(view)
+    CreateBankCharSection(
+        view
+    )
+
+    CreateAddBankCharButton(
+        view
+    )
+
+    CreateResetBankCharsButton(
+        view
+    )
 
     CreateResetDialog()
 
+    CreatePermissionsSection(
+        view
+    )
+
     GBM.AddCharUI.Initialize()
+
 end
