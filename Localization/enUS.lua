@@ -167,6 +167,40 @@ local ENGLISH = {
     SYNC_FINISHED =
         "Bank sync finished: %d items, %s",
 
+    REQUESTS_ITEM = "Item",
+    REQUESTS_AMOUNT = "Request",
+    REQUESTS_OWN_AMOUNT = "Own",
+    REQUESTS_EMPTY = "No open requests",
+
+    COMMAND_REQUESTS = "/gbm requests - Show stored requests",
+    COMMAND_BANKCHARS = "/gbm bankchars - Show registered bank characters",
+    COMMAND_DB = "/gbm db - Show current database status",
+    COMMAND_CLEAR_REQUESTS = "/gbm clearrequests - Clear all stored requests",
+
+    BANK_DATABASE_NOT_INITIALIZED = "Bank database is not initialized.",
+    GUILD_DATABASE_NOT_INITIALIZED = "Guild database is not initialized.",
+
+    NO_REQUESTS_STORED = "No requests stored.",
+    REQUESTS_COUNT = "Requests: %d",
+    REQUEST_CLEARED_COUNT = "Requests cleared: %d",
+
+    NO_BANK_CHARS_REGISTERED = "No bank characters registered.",
+    BANK_CHARS_COUNT = "Bank characters: %d",
+    BANK_CHAR_ITEM_TYPES = "%s | Item types: %d",
+
+    UNKNOWN_COMMAND = "Unknown command: %s",
+
+    GUILD_DB = "GuildDB",
+    BANK_DB = "BankDB",
+    DB_MEMBERS = "  Members: %d",
+    DB_BANK_CHARS = "  Bank characters: %d",
+    DB_ADDON_USERS = "  Addon users: %d",
+    DB_ITEM_TYPES = "  Item types: %d",
+    DB_REQUESTS = "  Requests: %d",
+    DB_DEPOSITS = "  Deposits: %d",
+    DB_RESERVATIONS = "  Reservations: %d",
+    DB_REVISION = "  Revision: %d",
+
 }
 
 local function ApplyLocale(

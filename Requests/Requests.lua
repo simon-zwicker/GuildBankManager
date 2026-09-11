@@ -100,17 +100,67 @@ local function GetRequest(
 
 end
 
-local function IsOfficer()
+local function CanAssignRequests()
 
-    local guildInfo =
-        GBM.WoW.GetGuildInfo()
+    if not GBM.Permissions
+        or not GBM.Permissions.CanAssignRequests then
 
-    if not guildInfo then
+        return false
+
+    end
+
+    return GBM.Permissions.CanAssignRequests()
+
+end
+
+local function IsCurrentBankChar(
+    bankChar
+)
+
+    if not bankChar then
         return false
     end
 
-    return guildInfo.rankIndex == 0
-        or guildInfo.rankIndex == 1
+    if not GBM.Permissions
+        or not GBM.Permissions.IsBankChar then
+
+        return false
+
+    end
+
+    if not GBM.Permissions.IsBankChar() then
+        return false
+    end
+
+    return GetPlayerFullName()
+        == bankChar
+
+end
+
+local function CanBankCharAccept(
+    request,
+    bankChar
+)
+
+    if not IsCurrentBankChar(
+        bankChar
+    ) then
+
+        return false
+
+    end
+
+    if not GBM.BankDB.CanFulfill(
+        bankChar,
+        request.itemID,
+        request.amount
+    ) then
+
+        return false
+
+    end
+
+    return true
 
 end
 
@@ -292,19 +342,15 @@ function Requests.Create(
             STATUS_RESERVED,
 
         acceptedBy = nil,
-
         acceptedAt = nil,
 
         fulfilledBy = nil,
-
         fulfilledAt = nil,
 
         cancelledBy = nil,
-
         cancelledAt = nil,
 
         rejectedBy = nil,
-
         rejectedAt = nil,
 
     }
@@ -371,7 +417,23 @@ function Requests.CanAccept(
 
     end
 
-    return true
+    if CanAssignRequests() then
+
+        return true
+
+    end
+
+    if CanBankCharAccept(
+        request,
+        bankChar
+    ) then
+
+        return true
+
+    end
+
+    return false,
+        "permission_denied"
 
 end
 
@@ -388,7 +450,10 @@ function Requests.Accept(
         )
 
     if not canAccept then
-        return nil, reason
+
+        return nil,
+            reason
+
     end
 
     local request =
@@ -429,7 +494,15 @@ function Requests.CanReject(
 
     end
 
-    if not IsOfficer() then
+    if not GBM.Permissions
+        or not GBM.Permissions.CanRejectRequests then
+
+        return false,
+            "permission_denied"
+
+    end
+
+    if not GBM.Permissions.CanRejectRequests() then
 
         return false,
             "permission_denied"
@@ -451,7 +524,10 @@ function Requests.Reject(
         )
 
     if not canReject then
-        return nil, reason
+
+        return nil,
+            reason
+
     end
 
     local request =
@@ -510,7 +586,10 @@ function Requests.Cancel(
         )
 
     if not canCancel then
-        return nil, reason
+
+        return nil,
+            reason
+
     end
 
     local request =
@@ -599,7 +678,10 @@ function Requests.Fulfill(
         )
 
     if not canFulfill then
-        return nil, reason
+
+        return nil,
+            reason
+
     end
 
     local request =
@@ -676,7 +758,15 @@ function Requests.Delete(
 
     end
 
-    if not IsOfficer() then
+    if not GBM.Permissions
+        or not GBM.Permissions.CanManageRequests then
+
+        return false,
+            "permission_denied"
+
+    end
+
+    if not GBM.Permissions.CanManageRequests() then
 
         return false,
             "permission_denied"

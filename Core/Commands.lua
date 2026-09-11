@@ -3,6 +3,7 @@ local GBM = GBM
 GBM.Commands = {}
 
 local Commands = GBM.Commands
+local L = GBM.L
 
 local function PrintMessage(
     message
@@ -18,15 +19,19 @@ end
 local function PrintHelp()
 
     PrintMessage(
-        "/gbm requests - Zeigt gespeicherte Requests"
+        L.COMMAND_REQUESTS
     )
 
     PrintMessage(
-        "/gbm bankchars - Zeigt registrierte Bankchars"
+        L.COMMAND_BANKCHARS
     )
 
     PrintMessage(
-        "/gbm db - Zeigt den aktuellen DB-Status"
+        L.COMMAND_DB
+    )
+
+    PrintMessage(
+        L.COMMAND_CLEAR_REQUESTS
     )
 
 end
@@ -39,7 +44,7 @@ local function PrintRequests()
     if not db then
 
         PrintMessage(
-            "Bank-Datenbank ist nicht initialisiert."
+            L.BANK_DATABASE_NOT_INITIALIZED
         )
 
         return
@@ -70,7 +75,13 @@ local function PrintRequests()
 
         itemName =
             itemName
-            or ("Item " .. (request.itemID or "?"))
+            or (
+                "Item "
+                .. (
+                    request.itemID
+                    or "?"
+                )
+            )
 
         PrintMessage(
             string.format(
@@ -88,7 +99,7 @@ local function PrintRequests()
     if count == 0 then
 
         PrintMessage(
-            "Keine Requests gespeichert."
+            L.NO_REQUESTS_STORED
         )
 
         return
@@ -96,8 +107,10 @@ local function PrintRequests()
     end
 
     PrintMessage(
-        "Requests: "
-        .. count
+        string.format(
+            L.REQUESTS_COUNT,
+            count
+        )
     )
 
 end
@@ -110,7 +123,7 @@ local function PrintBankChars()
     if not db then
 
         PrintMessage(
-            "Guild-Datenbank ist nicht initialisiert."
+            L.GUILD_DATABASE_NOT_INITIALIZED
         )
 
         return
@@ -154,7 +167,7 @@ local function PrintBankChars()
 
         PrintMessage(
             string.format(
-                "%s | Itemtypen: %d",
+                L.BANK_CHAR_ITEM_TYPES,
                 fullName,
                 itemTypes
             )
@@ -165,7 +178,7 @@ local function PrintBankChars()
     if count == 0 then
 
         PrintMessage(
-            "Keine Bankchars registriert."
+            L.NO_BANK_CHARS_REGISTERED
         )
 
         return
@@ -173,8 +186,10 @@ local function PrintBankChars()
     end
 
     PrintMessage(
-        "Bankchars: "
-        .. count
+        string.format(
+            L.BANK_CHARS_COUNT,
+            count
+        )
     )
 
 end
@@ -217,7 +232,7 @@ local function PrintDatabaseStatus()
     if not guildDB then
 
         PrintMessage(
-            "Guild-Datenbank ist nicht initialisiert."
+            L.GUILD_DATABASE_NOT_INITIALIZED
         )
 
         return
@@ -227,7 +242,7 @@ local function PrintDatabaseStatus()
     if not bankDB then
 
         PrintMessage(
-            "Bank-Datenbank ist nicht initialisiert."
+            L.BANK_DATABASE_NOT_INITIALIZED
         )
 
         return
@@ -235,74 +250,120 @@ local function PrintDatabaseStatus()
     end
 
     PrintMessage(
-        "GuildDB"
+        L.GUILD_DB
     )
 
     PrintMessage(
-        "  Mitglieder: "
-        .. CountEntries(
-            guildDB.members
+        string.format(
+            L.DB_MEMBERS,
+            CountEntries(
+                guildDB.members
+            )
         )
     )
 
     PrintMessage(
-        "  Bankchars: "
-        .. CountEntries(
-            guildDB.bankChars
+        string.format(
+            L.DB_BANK_CHARS,
+            CountEntries(
+                guildDB.bankChars
+            )
         )
     )
 
     PrintMessage(
-        "  Addon-User: "
-        .. CountEntries(
-            guildDB.addonUsers
+        string.format(
+            L.DB_ADDON_USERS,
+            CountEntries(
+                guildDB.addonUsers
+            )
         )
     )
 
     PrintMessage(
-        "BankDB"
+        L.BANK_DB
     )
 
     PrintMessage(
-        "  Bankchars: "
-        .. CountEntries(
-            bankDB.bankChars
+        string.format(
+            L.DB_BANK_CHARS,
+            CountEntries(
+                bankDB.bankChars
+            )
         )
     )
 
     PrintMessage(
-        "  Itemtypen: "
-        .. CountEntries(
-            bankDB.items
+        string.format(
+            L.DB_ITEM_TYPES,
+            CountEntries(
+                bankDB.items
+            )
         )
     )
 
     PrintMessage(
-        "  Requests: "
-        .. CountEntries(
-            bankDB.requests
+        string.format(
+            L.DB_REQUESTS,
+            CountEntries(
+                bankDB.requests
+            )
         )
     )
 
     PrintMessage(
-        "  Deposits: "
-        .. CountEntries(
-            bankDB.deposits
+        string.format(
+            L.DB_DEPOSITS,
+            CountEntries(
+                bankDB.deposits
+            )
         )
     )
 
     PrintMessage(
-        "  Reservations: "
-        .. CountEntries(
-            bankDB.reservations
+        string.format(
+            L.DB_RESERVATIONS,
+            CountEntries(
+                bankDB.reservations
+            )
         )
     )
 
     PrintMessage(
-        "  Revision: "
-        .. (
-            bankDB.sync.revision
-            or 0
+        string.format(
+            L.DB_REVISION,
+            bankDB.sync.revision or 0
+        )
+    )
+
+end
+
+local function ClearRequests()
+
+    local db =
+        GBM.BankDB.Get()
+
+    if not db then
+
+        PrintMessage(
+            L.BANK_DATABASE_NOT_INITIALIZED
+        )
+
+        return
+
+    end
+
+    local count =
+        CountEntries(
+            db.requests
+        )
+
+    db.requests = {}
+
+    PrintMessage(
+        string.format(
+            L.REQUEST_CLEARED_COUNT,
+            count
         )
     )
 
@@ -356,9 +417,19 @@ local function HandleCommand(
 
     end
 
+    if command == "clearrequests" then
+
+        ClearRequests()
+
+        return
+
+    end
+
     PrintMessage(
-        "Unbekannter Command: "
-        .. command
+        string.format(
+            L.UNKNOWN_COMMAND,
+            command
+        )
     )
 
     PrintHelp()
