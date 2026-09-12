@@ -194,6 +194,73 @@ local function CreateList()
 
 end
 
+local function CreateEmptyMessage()
+
+    local message =
+        Bank.Content:CreateFontString(
+            nil,
+            "OVERLAY"
+        )
+
+    message:SetFont(
+        "Fonts\\FRIZQT__.TTF",
+        22,
+        ""
+    )
+
+    message:SetPoint(
+        "TOP",
+        Bank.Content,
+        "TOP",
+        0,
+        -20
+    )
+
+    message:SetWidth(
+        500
+    )
+
+    message:SetJustifyH(
+        "CENTER"
+    )
+
+    message:SetJustifyV(
+        "TOP"
+    )
+
+    message:Hide()
+
+    Bank.EmptyMessage =
+        message
+
+end
+
+local function ShowEmptyMessage(
+    text
+)
+
+    if not Bank.EmptyMessage then
+        return
+    end
+
+    Bank.EmptyMessage:SetText(
+        text
+    )
+
+    Bank.EmptyMessage:Show()
+
+end
+
+local function HideEmptyMessage()
+
+    if Bank.EmptyMessage then
+
+        Bank.EmptyMessage:Hide()
+
+    end
+
+end
+
 local function EnsureRows(
     count
 )
@@ -291,6 +358,24 @@ local function UpdateContentHeight(
 
 end
 
+local function HasBankChars()
+
+    local db =
+        GBM.GuildDB.Get()
+
+    if not db
+        or not db.bankChars then
+
+        return false
+
+    end
+
+    return next(
+        db.bankChars
+    ) ~= nil
+
+end
+
 function Bank.Refresh()
 
     if not Bank.Search then
@@ -304,6 +389,8 @@ function Bank.Refresh()
         Bank.Data.GetFilteredItems(
             searchText
         )
+
+    HideEmptyMessage()
 
     if Bank.ExpandedRow
         and not IsItemVisible(
@@ -359,6 +446,30 @@ function Bank.Refresh()
         contentHeight
     )
 
+    if #itemIDs == 0 then
+
+        if searchText ~= "" then
+
+            ShowEmptyMessage(
+                L.BANK_NO_SEARCH_RESULTS
+            )
+
+        elseif not HasBankChars() then
+
+            ShowEmptyMessage(
+                L.BANK_NO_BANKCHARS
+            )
+
+        else
+
+            ShowEmptyMessage(
+                L.BANK_EMPTY
+            )
+
+        end
+
+    end
+
     if Bank.Layout then
 
         Bank.Layout.UpdateListWidth()
@@ -388,6 +499,8 @@ function Bank.Initialize()
     CreateDivider()
 
     CreateList()
+
+    CreateEmptyMessage()
 
     Bank.Layout.CreateHeader()
 

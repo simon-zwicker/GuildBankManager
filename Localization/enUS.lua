@@ -15,6 +15,15 @@ local ENGLISH = {
     BANK =
         "Bank",
 
+    BANK_NO_BANKCHARS =
+        "No bank characters have been defined yet.",
+
+    BANK_EMPTY =
+        "There are currently no items in the guild bank.",
+
+    BANK_NO_SEARCH_RESULTS =
+        "No matching items found.",
+
     REQUESTS =
         "Requests",
 

@@ -195,6 +195,43 @@ function BankDB.RemoveBankChar(
         fullName
     ] = nil
 
+    for itemID in pairs(
+        db.items
+    ) do
+
+        local stillExists =
+            false
+
+        for _, bankChar in pairs(
+            db.bankChars
+        ) do
+
+            if GBM.Utils.IsTable(
+                bankChar.items
+            )
+                and (
+                    bankChar.items[itemID]
+                    or 0
+                ) > 0 then
+
+                stillExists =
+                    true
+
+                break
+
+            end
+
+        end
+
+        if not stillExists then
+
+            db.items[itemID] =
+                nil
+
+        end
+
+    end
+
     if db.sync
         and db.sync.bankChar
         == fullName then

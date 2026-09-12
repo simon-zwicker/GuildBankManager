@@ -297,6 +297,10 @@ local function CreateWindow()
             UIParent,
             "BasicFrameTemplateWithInset"
         )
+    
+    frame:SetFrameStrata(
+        "DIALOG"
+    )
 
     frame:SetSize(
         WINDOW_WIDTH,
@@ -580,6 +584,13 @@ local function CreateButtons(
                     and GBM.UI.Settings then
 
                     GBM.UI.Settings.Refresh()
+
+                end
+
+                if GBM.UI
+                    and GBM.UI.Bank then
+
+                    GBM.UI.Bank.Refresh()
 
                 end
 

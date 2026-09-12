@@ -40,6 +40,15 @@
         "YES",
         "NO",
         "LOCALIZED_CLASS_NAMES_MALE",
-        "LOCALIZED_CLASS_NAMES_FEMALE"
+        "LOCALIZED_CLASS_NAMES_FEMALE",
+        "STATISTICS",
+        "SETTINGS",
+        "TOTAL",
+        "AVAILABLE",
+        "ADD",
+        "CANCEL",
+        "RESET",
+        "SEARCH",
+        "REMOVE"
     ]
 }
